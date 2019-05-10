@@ -27,6 +27,8 @@ This is the final project of the Northwestern MSR project. This project is an ex
 6. NAO convert the text to speech
 7. NAO sends speech to user. 
 
+**TODO**: Add numbers to flow diagram
+
 ## Included components
 
 * [Nao-Robot Choregraphe Behaviour](http://doc.aldebaran.com/2-1/): The fruit of a unique combination of mechanical engineering and software, NAO is a character made up of a multitude of sensors, motors and software piloted by a made-to-measure operating system: NAOqi OS.
