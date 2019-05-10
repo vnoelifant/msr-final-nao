@@ -9,7 +9,7 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
  ## NAO-Watson Framework
 
- ![](/images/Nao_Watson_Architecture.png)
+ ![](images/Nao_Watson_Architecture.png)
 
  ## General Flow
 
