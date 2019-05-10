@@ -6,10 +6,15 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
  [Click here to view project status and timeline](https://docs.google.com/spreadsheets/d/1U-bm2-uXRQx1xlUcq1asHpyyIms6dJSCPX-FGHYObo8/edit#gid=1161341563). 
 
+ ## Testing Flask with Watson. 
+
+ IBM's voice bot code pattern was used to test integration of Watson services in a web app built on top of JQuery and Python Flask. See demo below. 
+
+ [![IMAGE ALT TEXT](http://img.youtube.com/vi/enxMyH2EoZw/0.jpg)](http://www.youtube.com/watch?v=enxMyH2EoZw "Flask Watson Testing")
 
  ## NAO-Watson Framework
 
- ![](images/Nao_Watson_Architecture.png)
+ ![](images/NAO_Watson_Architecture.png)
 
  ## General Flow
 
