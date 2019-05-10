@@ -19,13 +19,12 @@ This is the final project of the Northwestern MSR project. This project is an ex
  ## General Flow
 
 1. User speaks to NAO.
-2. NAO converts the speech to text.
-3. Node-RED flow sends the text to the Watson Assistant API. 
-4. The Watson Assistant API takes the text input, analyzed for intents (purposes of user inputs), and builds a dialogue that determines the responses NAO will give.
-5. The Watson Assistant API sends the textual responses back to Node-RED.
-5. The Node-RED flow sends the dialogue responses back to NAO.
-6. NAO convert the text to speech
-7. NAO sends speech to user. 
+2. A client python application connected to NAO converts the speech to text and sends the text to the Watson Assistant API. 
+3. The Watson Assistant API takes the text input, analyzed for intents (purposes of user inputs), and builds a dialogue that determines the responses NAO will give.
+4. The Watson Assistant API sends the textual responses back to the client Python application.
+5. The client Python application converts the text to speech.
+6. Nao speaks response to user. 
+
 
 **TODO**: Add numbers to flow diagram
 
