@@ -6,12 +6,6 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
  [Click here to view project status and timeline](https://docs.google.com/spreadsheets/d/1U-bm2-uXRQx1xlUcq1asHpyyIms6dJSCPX-FGHYObo8/edit#gid=1161341563). 
 
- ## Testing Flask with Watson. 
-
- IBM's voice bot code pattern was used to test integration of Watson services in a web app built on top of JQuery and Python Flask. See demo below. 
-
- [![IMAGE ALT TEXT](http://img.youtube.com/vi/enxMyH2EoZw/0.jpg)](http://www.youtube.com/watch?v=enxMyH2EoZw "Flask Watson Testing")
-
  ## NAO-Watson Framework
 
  ![](images/NAO_Watson_Architecture.png)
@@ -25,18 +19,19 @@ This is the final project of the Northwestern MSR project. This project is an ex
 5. The client Python application converts the text to speech.
 6. Nao speaks response to user. 
 
-
-
-
 ## Included components
 
 * Python Application including functions to run the NAO robot and connect to Watson Services. Tools included in application are:
   * [Nao-Robot Python-SDK](http://doc.aldebaran.com/2-1/dev/python/index.html): Allows devveloper to create Python modules that can run remotely or on the robot.
   * [Watson Developer Python-SDK](https://github.com/watson-developer-cloud/python-sdk): Client library to use the IBM Watson services in Python and available in pip as watson-developer-cloud
 
-* [Watson-Assistant-Service](https://cloud.ibm.com/apidocs/assistant): The IBM Watson™ Assistant service combines machine learning, natural language understanding, and integrated dialog tools to create conversation flows between your apps and your users..
+* [Watson-Assistant-Service](https://cloud.ibm.com/apidocs/assistant): The IBM Watson™ Assistant service combines machine learning, natural language understanding, and integrated dialog tools to create conversation flows between your apps and your users.
 
+## Testing Flask with Watson. 
 
+ IBM's voice bot code pattern was used to test integration of Watson services in a web app built on top of JQuery and Python Flask. See demo below. 
+
+ [![IMAGE ALT TEXT](http://img.youtube.com/vi/enxMyH2EoZw/0.jpg)](http://www.youtube.com/watch?v=enxMyH2EoZw "Flask Watson Testing")
 
 
 
