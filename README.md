@@ -26,15 +26,15 @@ This is the final project of the Northwestern MSR project. This project is an ex
 6. Nao speaks response to user. 
 
 
-**TODO**: Add numbers to flow diagram
+
 
 ## Included components
 
-* [Nao-Robot Choregraphe Behaviour](http://doc.aldebaran.com/2-1/): The fruit of a unique combination of mechanical engineering and software, NAO is a character made up of a multitude of sensors, motors and software piloted by a made-to-measure operating system: NAOqi OS.
+* Python Application including functions to run the NAO robot and connect to Watson Services. Tools included in application are:
+  * [Nao-Robot Python-SDK](http://doc.aldebaran.com/2-1/dev/python/index.html): Allows devveloper to create Python modules that can run remotely or on the robot.
+  * [Watson Developer Python-SDK](https://github.com/watson-developer-cloud/python-sdk): Client library to use the IBM Watson services in Python and available in pip as watson-developer-cloud
 
-* [Node-RED](https://console.bluemix.net/catalog/starters/node-red-starter): Node-RED is a programming tool for wiring together APIs and online services.
-
-* [Watson-Assistant-API](https://cloud.ibm.com/apidocs/assistant?code=python#get-response-to-user-input): Build, test and deploy a bot or virtual agent across mobile devices, messaging platforms, or even on a physical robot.
+* [Watson-Assistant-Service](https://cloud.ibm.com/apidocs/assistant): The IBM Watson™ Assistant service combines machine learning, natural language understanding, and integrated dialog tools to create conversation flows between your apps and your users..
 
 
 
