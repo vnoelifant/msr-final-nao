@@ -102,7 +102,7 @@ class SoundReceiverModule(naoqi.ALModule):
         audio = naoqi.ALProxy( "ALAudioDevice", self.strNaoIp, 9559);
         audio.unsubscribe( self.getName() );    
         print( "INF: SoundReceiver: stopped!" );
-        print("self.wavfile",self.wavfile)
+        #print("self.wavfile",self.wavfile)
 
         if( self.wavfile != None ):
             self.wavfile.close();
@@ -117,16 +117,16 @@ class SoundReceiverModule(naoqi.ALModule):
         self.wavfile.setframerate(48000) # from Naoqi ALAudioDevice API
         self.wavfile.setnchannels(1)
         self.wavfile.setsampwidth(2)
-
         # number of frames is 1024. 4 bytes per frame = 4096 = block size
         f = open(rawfile, "rb")
         sample = f.read(4096)
+        #print 'writing file: ' + (self.wavfile);
         print 'writing file: ' + filename + '.wav'
         while sample != "":
             self.wavfile.writeframes(sample)
             sample = f.read(4096)
 
-    #os.remove(rawfile)
+        #os.remove(rawfile)
     """
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     
@@ -139,8 +139,8 @@ class SoundReceiverModule(naoqi.ALModule):
         # reshape data
         aSoundData = np.reshape(aSoundDataInterlaced, (nbOfChannels, nbrOfSamplesByChannel), 'F');
         # save to file
-        if( self.outfile == None):
-            strFilenameOut = "test6.raw";
+        if(self.outfile == None):
+            strFilenameOut = "test20.raw";
             print( "Writing sound to '%s'" % strFilenameOut);
             self.outfile = open( strFilenameOut, "wb");
      
@@ -155,7 +155,7 @@ class SoundReceiverModule(naoqi.ALModule):
         #~ self.stop(); # make naoqi crash        
         for nNumChannel in range( 1, nbOfChannels ):
             aSoundData[nNumChannel].tofile(self.aOutfile[nNumChannel-1]); 
-        self.rawToWav('test6')
+        self.rawToWav('test20')
 
 
 

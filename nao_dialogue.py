@@ -1,7 +1,7 @@
 import os
 import json
 from os.path import join, dirname
-from ibm_watson import SpeechToTextV1
+from ibm_watson import SpeechToTextV1, AssistantV1
 from optparse import OptionParser
 import naoqi
 import numpy as np
@@ -16,9 +16,26 @@ from nao_recorder import SoundReceiverModule
 
 NAO_IP = "169.254.126.202" 
 
-def get_nao_response(text):
+def get_nao_response(watson_text):
     tts = naoqi.ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
-    tts.say("Hey there friend!")
+    tts.say(watson_text)
+
+def get_watson_response(user_speech_text):
+    # initialize the Watson Assistant
+    assistant = AssistantV1(
+        version='2019-02-28',
+        iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
+        url='https://gateway.watsonplatform.net/assistant/api'
+    )
+
+    response = assistant.message(
+    workspace_id='5db84ece-e19e-4914-9993-ab7206b50a5c',
+    input={'text': user_speech_text}).get_result()
+    print(json.dumps(response, indent=2))
+    watson_text_response = response['output']['text'][0]
+    watson_text_response = '{}'.format(watson_text_response)
+    return watson_text_response
+    #print('Watson says: ',watson_text,type(watson_text))
 
 def transcribe_audio(path_to_audio_file):
     # initialize speech to text service
@@ -27,21 +44,14 @@ def transcribe_audio(path_to_audio_file):
         url='https://stream.watsonplatform.net/speech-to-text/api')
 
     with open((path_to_audio_file), 'rb') as audio_file:
-        speech_recognition_results = speech_to_text.recognize(
+        return speech_to_text.recognize(
                 audio=audio_file,
                 content_type='audio/wav',
                 word_alternatives_threshold=0.9,
-                keywords=['hey', 'hello', 'hi'],
+                keywords=['hey', 'hi','watson','friend','meet'],
                 keywords_threshold=0.5
             ).get_result()
-        print(json.dumps(speech_recognition_results, indent=2))
-        with open('test5_response.txt', 'w') as responsefile:  
-            json.dump(speech_recognition_results, responsefile)
-        text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] # figure out how to print more transcripts! (loop?)
-        # think there is an example of this in the javascript examples from winter quarter (sports buddy)
-        print("Text: " + text + "\n")
 
-    get_nao_response(text)
 
 def main():
     """ Main entry point
@@ -88,7 +98,16 @@ def main():
         print
         print "Interrupted by user, shutting down"
         print("Transcribing audio....\n")
-        transcribe_audio('test6.wav')
+        speech_recognition_results = transcribe_audio('test20.wav')
+        print(json.dumps(speech_recognition_results, indent=2))
+        with open('test20_response.txt', 'w') as responsefile:  
+            json.dump(speech_recognition_results, responsefile)
+        user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] # figure out how to print more transcripts! (loop?)
+        # think there is an example of this in the javascript examples from winter quarter (sports buddy)
+        print("Text: " + user_speech_text + "\n")
+        #get_nao_response(user_speech_text)
+        watson_text_response = get_watson_response(user_speech_text)
+        get_nao_response(watson_text_response)
         sys.exit(0)
 
 if __name__ == "__main__":
