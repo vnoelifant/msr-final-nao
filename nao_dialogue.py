@@ -14,22 +14,22 @@ import json
 #from naoqi import ALProxy
 from nao_recorder import SoundReceiverModule
 
-NAO_IP = "169.254.126.202" 
+NAO_IP = "<YOUR-NAOIP>"
 
 def get_nao_response(watson_text):
-    tts = naoqi.ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
+    tts = naoqi.ALProxy("ALTextToSpeech", '<YOUR-NAOIP>', 9559)
     tts.say(watson_text)
 
 def get_watson_response(user_speech_text):
     # initialize the Watson Assistant
     assistant = AssistantV1(
-        version='2019-02-28',
-        iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
-        url='https://gateway.watsonplatform.net/assistant/api'
+        version='<YOUR-VERSION>',
+        iam_apikey='<YOUR-IAMAPIKEY>',
+        url='<YOUR-URL>'
     )
 
     response = assistant.message(
-    workspace_id='5db84ece-e19e-4914-9993-ab7206b50a5c',
+    workspace_id='<YOUR-WORKSPACEID>',
     input={'text': user_speech_text}).get_result()
     print(json.dumps(response, indent=2))
     watson_text_response = response['output']['text'][0]
@@ -40,8 +40,8 @@ def get_watson_response(user_speech_text):
 def transcribe_audio(path_to_audio_file):
     # initialize speech to text service
     speech_to_text = SpeechToTextV1(
-        iam_apikey='4aXD2UR_3lDdbH6XwF1u2g0OP8-jAuAU2uVmafislERZ',
-        url='https://stream.watsonplatform.net/speech-to-text/api')
+        iam_apikey='<YOUR-IAMAPIKEY>',
+        url='<YOUR-URL>')
 
     with open((path_to_audio_file), 'rb') as audio_file:
         return speech_to_text.recognize(
@@ -88,11 +88,17 @@ def main():
     SoundReceiver = SoundReceiverModule("SoundReceiver", pip)
 
     print("Please say something into NAO's microphone\n")
-    SoundReceiver.start()
+    SoundReceiver.start() #
+
+
 
     try:
         while True:
             time.sleep(1)
+
+
+            # if SoundReceiver.ready():
+                # process data, transcribe # meat of system: state machine
 
     except KeyboardInterrupt:
         print
