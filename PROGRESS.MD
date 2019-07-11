@@ -10,14 +10,14 @@ This is a list of weekly goals as advised by Matthew Elwin, weekly accomplishmen
 ## **Weekly Goals**:
 
 * ## **Week 6/24/19 Goals**
-  *  **Items for Nao**
+  * **Items for Nao**
     * a. Get the .wav file from Nao onto your computer for further processing
     * b. Use Nao's audio intensity monitoring functions to determine when to start and stop recording the audio
     * c. if you get stuck here you can move on to the watson api stuff and just either record audio files using pyaudio or pre-record some audio and assume you have the files.
 
-  *  **Items for Watson**
-     * c. Use the watson api from python to duplicate the functionality of the TJ bot project
-     * d. Switch to synchronous requests for the text to speech (see below)
+  * **Items for Watson**
+    * c. Use the watson api from python to duplicate the functionality of the TJ bot project
+    * d. Switch to synchronous requests for the text to speech (see below)
   
   * ### **Meeting Agenda**:
     * #### Accomplishments
