@@ -5,7 +5,7 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
 ## Project Tracker
 
- [Click here to view project [PROGRESS](./PROGRESS.MD)
+ Click here to view project [PROGRESS](./PROGRESS.MD)
 
  ## NAO-Watson Framework (IN WORK)
 
