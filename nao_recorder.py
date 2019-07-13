@@ -63,7 +63,7 @@ class SoundReceiverModule(naoqi.ALModule):
     # __init__ - end of program
     def __del__(self):
         print( "SoundReceiverModule.__del__: cleaning everything");  
-        self.stop();
+        self.stop_recording();
 
     """
     module subscribe:
@@ -87,7 +87,8 @@ class SoundReceiverModule(naoqi.ALModule):
 `   """
 
 
-    def start(self):
+    def start_recording(self): # ready is false
+        ready == False
         audio = naoqi.ALProxy( "ALAudioDevice", self.strNaoIp, 9559);
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
@@ -97,10 +98,10 @@ class SoundReceiverModule(naoqi.ALModule):
         print( "SoundReceiver: started!" );
         # self.processRemote( 4, 128, [18,0], "A"*128*4*2 ); # for local test
 
-    def stop(self):
+    def stop_recording(self): #  ready true
         print( "INF: SoundReceiver: stopping..." );
         audio = naoqi.ALProxy( "ALAudioDevice", self.strNaoIp, 9559);
-        audio.unsubscribe( self.getName() );    
+        audio.unsubscribe( self.getName());    
         print( "INF: SoundReceiver: stopped!" );
         #print("self.wavfile",self.wavfile)
 
@@ -125,8 +126,7 @@ class SoundReceiverModule(naoqi.ALModule):
         while sample != "":
             self.wavfile.writeframes(sample)
             sample = f.read(4096)
-
-        #os.remove(rawfile)
+        os.remove(rawfile)
     """
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     
@@ -134,7 +134,26 @@ class SoundReceiverModule(naoqi.ALModule):
     def processRemote(self, nbOfChannels, nbrOfSamplesByChannel, aTimeStamp, buffer):
         # This method receives the streaming microphone data. The buffer parameter contains an 
         # array of bytes that was read from the microphone
+
+        # start silence:
+        # while silent x seconds:
+            # throw data
+        
+        # else if noise (max array length) and if enough data: 
+            #   # set state to stop (don't get more data)
+                # unsubscribe
+                # get audio buffer/append array 
+                # send to file
+                # clear buffer
+                # set ready == True: # this means watson is ready to transcribe speech to text
+
         aSoundDataInterlaced = np.fromstring(str(buffer), dtype=np.int16);
+        # TODO: Analyze data (aSoundDataInterlaced)
+        #~ print( "len data: %s " % len( aSoundDataInterlaced));
+        #~ print( "data interlaced: " ),
+        #~ for i in range( 8 ):
+            #~ print( "%d, " % (aSoundDataInterlaced[i])),
+        #~ print( "" );
         
         # reshape data
         aSoundData = np.reshape(aSoundDataInterlaced, (nbOfChannels, nbrOfSamplesByChannel), 'F');
@@ -151,12 +170,31 @@ class SoundReceiverModule(naoqi.ALModule):
             
         #tofile: Write array to a file as text or binary (default).
         #~ aSoundDataInterlaced.tofile(self.outfile ); # wrote 4 channels
-        aSoundData[0].tofile(self.outfile); # wrote only one channel          
-        #~ self.stop(); # make naoqi crash        
+        aSoundData[0].tofile(self.outfile); # wrote only one channel
+
+    # TODO: Analyze data (aSoundData)
+        #~ print( "aTimeStamp: %s" % aTimeStamp );
+        #~ print( "data wrotten: " ),
+        #~ for i in range( 8 ):
+            #~ print( "%d, " % (aSoundData[0][i]) ),
+        #~ print( "" );            
+
+        # will need following block of code to detect noise
+        # compute peak
+        #aPeakValue = np.max( aSoundData );
+        #if( aPeakValue > 16000 ):
+            #print( "Peak: %s" % aPeakValue );
+
+        #~ self.stop_recording(); # make naoqi crash        
         for nNumChannel in range( 1, nbOfChannels ):
             aSoundData[nNumChannel].tofile(self.aOutfile[nNumChannel-1]); 
         self.rawToWav('test20')
 
+        # if enough data:
+           
+            # set state to stop (dont get more data), and then set ready variable
+            #  # write to file
+            # set state to ready for further processing, ready is boolean
 
 
     

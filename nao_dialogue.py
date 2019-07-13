@@ -14,22 +14,22 @@ import json
 #from naoqi import ALProxy
 from nao_recorder import SoundReceiverModule
 
-NAO_IP = "<YOUR-NAOIP>"
+NAO_IP = "169.254.126.202" 
 
 def get_nao_response(watson_text):
-    tts = naoqi.ALProxy("ALTextToSpeech", '<YOUR-NAOIP>', 9559)
+    tts = naoqi.ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
     tts.say(watson_text)
 
 def get_watson_response(user_speech_text):
     # initialize the Watson Assistant
     assistant = AssistantV1(
-        version='<YOUR-VERSION>',
-        iam_apikey='<YOUR-IAMAPIKEY>',
-        url='<YOUR-URL>'
+        version='2019-02-28',
+        iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
+        url='https://gateway.watsonplatform.net/assistant/api'
     )
 
     response = assistant.message(
-    workspace_id='<YOUR-WORKSPACEID>',
+    workspace_id='5db84ece-e19e-4914-9993-ab7206b50a5c',
     input={'text': user_speech_text}).get_result()
     print(json.dumps(response, indent=2))
     watson_text_response = response['output']['text'][0]
@@ -40,8 +40,8 @@ def get_watson_response(user_speech_text):
 def transcribe_audio(path_to_audio_file):
     # initialize speech to text service
     speech_to_text = SpeechToTextV1(
-        iam_apikey='<YOUR-IAMAPIKEY>',
-        url='<YOUR-URL>')
+        iam_apikey='4aXD2UR_3lDdbH6XwF1u2g0OP8-jAuAU2uVmafislERZ',
+        url='https://stream.watsonplatform.net/speech-to-text/api')
 
     with open((path_to_audio_file), 'rb') as audio_file:
         return speech_to_text.recognize(
@@ -88,17 +88,21 @@ def main():
     SoundReceiver = SoundReceiverModule("SoundReceiver", pip)
 
     print("Please say something into NAO's microphone\n")
-    SoundReceiver.start() #
-
-
+    SoundReceiver.start_recording() 
 
     try:
         while True:
-            time.sleep(1)
+            #time.sleep(1)
 
 
-            # if SoundReceiver.ready():
-                # process data, transcribe # meat of system: state machine
+        # if SoundReceiver.ready(): # ready == True from nao_recorder.py
+            # call transcribe # meat of system: state machine
+
+
+            # if I say stop:
+                # break out of loop
+            # else:
+                # SoundReceiver.start_recording() # start listening for speech again
 
     except KeyboardInterrupt:
         print
@@ -111,7 +115,6 @@ def main():
         user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] # figure out how to print more transcripts! (loop?)
         # think there is an example of this in the javascript examples from winter quarter (sports buddy)
         print("Text: " + user_speech_text + "\n")
-        #get_nao_response(user_speech_text)
         watson_text_response = get_watson_response(user_speech_text)
         get_nao_response(watson_text_response)
         sys.exit(0)
