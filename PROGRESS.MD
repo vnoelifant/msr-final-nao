@@ -58,4 +58,30 @@ This is a list of weekly goals as advised by Matthew Elwin, weekly accomplishmen
   * 3. In particular one processing step you should implement is an exit phrase.   if the exit phrase occurs, you should exit the program
   * 4. Once you get the above working you should start thinking/implementing the logic for processing the transcribed audio.
 
+
+
+  * ### **Meeting Agenda**:
+    * #### Accomplishments
+      * Continued the following Python [script](https://github.com/vnoelifant/msr-final-nao/blob/master/nao_dialogue.py) using this tutorial for Pepper as reference:
+      https://medium.com/@pwc.emtech.eu/pepper-integration-with-dialogflow-1d7f1582da1a. Updated script has following functionalities:
+        * peak calculation for sound detection
+        * silence detection
+        * event thread for speech recognition and Queue for audio storage
+        * trigger to stop event thread
+        * MORE TO BE UPDATED
+        * See video demo below:
+
+       [![IMAGE ALT TEXT](http://img.youtube.com/vi/ttEaqCrsf54/0.jpg)](http://www.youtube.com/watch?v=ttEaqCrsf54 "Nao Dialogue")
+    
+    * #### Issues
+      * IN WORK
+
+    * #### TODO
+      * IN WORK
+      * Restructure updated code and commit to Github 
+      
+
+  * ### **7/18/19 Meeting Minutes**:
+    * 
+
   
