@@ -73,8 +73,15 @@ This is a list of weekly goals as advised by Matthew Elwin, weekly accomplishmen
 
        [![IMAGE ALT TEXT](http://img.youtube.com/vi/ttEaqCrsf54/0.jpg)](http://www.youtube.com/watch?v=ttEaqCrsf54 "Nao Dialogue")
     
-    * #### Issues
+    * #### Issues/Questions
       * IN WORK
+      * Is there a way to clear the wav files after conversion?
+      * Get this error often coming from Watson side, and doesn't respond:
+        * Traceback (most recent call last):
+  File "/home/veronicanoel90/NAO/scripts/nao_recorder_2.py", line 224, in stop_recording
+    user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript']
+IndexError: list index out of range
+
 
     * #### TODO
       * IN WORK
