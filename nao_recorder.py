@@ -52,14 +52,15 @@ class SoundReceiverModule(naoqi.ALModule):
     def __init__(self, strModuleName, strNaoIp):
         try:
             naoqi.ALModule.__init__(self, strModuleName );
-            self.BIND_PYTHON( self.getName(),"processRemote");
+            self.BIND_PYTHON(self.getName(),"processRemote");
             self.strNaoIp = strNaoIp;
             self.outfile = None;
             self.aOutfile = [None]*(4-1); # ASSUME max nbr channels = 4
             self.wavfile = None;
             self.recording = False
+            self.silence = 500 # threshold to detect silence 
         except BaseException, err:
-            print( "ERR: SoundReceiverModule: loading error: %s" % str(err) );
+            print( "ERR: SoundReceiverModule: loading error: %s" % str(err));
 
     # __init__ - end of program
     #def __del__(self):
@@ -148,27 +149,37 @@ class SoundReceiverModule(naoqi.ALModule):
         aSoundDataInterlaced = np.fromstring(str(buffer), dtype=np.int16);
    
         # reshape data
-        aSoundData = np.reshape(aSoundDataInterlaced, (nbOfChannels, nbrOfSamplesByChannel), 'F');
+        aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
         # save to file
         if(self.outfile == None):
-            strFilenameOut = "test20.raw";
+            strFilenameOut = "test.raw";
             print( "Writing sound to '%s'" % strFilenameOut);
             self.outfile = open( strFilenameOut, "wb");
      
             for nNumChannel in range( 1, nbOfChannels ):
                 strFilenameOutChan = strFilenameOut.replace(".raw", "_%d.raw"%nNumChannel);
-                self.aOutfile[nNumChannel-1] = open( strFilenameOutChan, "wb" );
-                print( "Writing other channel sound to '%s'" % strFilenameOutChan );
+                self.aOutfile[nNumChannel-1] = open( strFilenameOutChan, "wb");
+                print("Writing other channel sound to '%s'" % strFilenameOutChan);
             
         #tofile: Write array to a file as text or binary (default).
         # aSoundDataInterlaced.tofile(self.outfile ); # write 4 channels
         aSoundData[0].tofile(self.outfile); # write only one channel
           
-        for nNumChannel in range( 1, nbOfChannels ):
+        for nNumChannel in range(1, nbOfChannels):
             aSoundData[nNumChannel].tofile(self.aOutfile[nNumChannel-1]); 
         
-        # condition on detecting speech to be transcribed
-        speech_detected = self.speech_detected()
+        # conditions on detecting speech to be transcribed
+        # sound below a set silence bound
+        sound_silent = self.silent(aSoundData)
+
+        # sound is at peak value
+        sound_peak = self.get_peak_sound(aSoundData)
+        
+        # speech is detectedf if sound reached peak and below silence threshold 
+        # before and after speaking
+        speech_detected = sound_silent and sound_peak
+        
+        # if speech detected trim silence, add to buffer, and stop recording
         if speech_detected:
             # trim silence on both ends of data
             self.trim_silence()
@@ -177,8 +188,16 @@ class SoundReceiverModule(naoqi.ALModule):
             # stop recording 
             self.stop_recording()
 
-    def speech_detected():
-        pass
+    def get_peak_sound(self,aSoundData):
+        "Returns 'True' if max sound at peak value"
+        return np.max(aSoundData) > 15000
+    
+    def get_silence(self, aSoundData):
+        "Returns 'True' if sound data below set 'silent' threshold"
+        print len(aSoundData)
+        print max(aSoundData)
+        print type(aSoundData)
+        return max(aSoundData) < self.silence
 
     def trim_silence():
         pass
