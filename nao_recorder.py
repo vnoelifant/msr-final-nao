@@ -42,11 +42,12 @@ right  microphone  /  3:  front  microphone  /  4:  rear  microphone.
 
 """
 
-# TODO: add silence detection and peak sound variables to know when to stop recording
+# TODO: 
+# add new stub functions
+# add silence detection and peak sound variables to know when to stop recording
 class SoundReceiverModule(naoqi.ALModule):
     """
-    Use this object to get call back from the ALMemory of the naoqi world.
-    Your callback needs to be a method with two parameter (variable name, value).
+    Custom Module to access the microphone data from Nao. Module inherited from Naoqi ALModule.
     """
 
     def __init__(self, strModuleName, strNaoIp):
@@ -86,27 +87,32 @@ class SoundReceiverModule(naoqi.ALModule):
 
 `   """
 
-
-    def start_recording(self): # ready is false
-        ready == False
+    # start recording
+    def start_recording(self): 
+        recording = True
         audio = naoqi.ALProxy( "ALAudioDevice", self.strNaoIp, 9559);
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         nSampleRate = 48000;
-        audio.setClientPreferences( self.getName(),  nSampleRate, nNbrChannelFlag, nDeinterleave); # setting same as default generate a bug !?!
+        audio.setClientPreferences( self.getName(),  nSampleRate, nNbrChannelFlag, nDeinterleave); 
         audio.subscribe( self.getName() );
         print( "SoundReceiver: started!" );
-        # self.processRemote( 4, 128, [18,0], "A"*128*4*2 ); # for local test
 
-    def stop_recording(self): #  ready true
+    def stop_recording(self): 
+        # stop recording and unsubscribe from Naoqi
         print( "INF: SoundReceiver: stopping..." );
         audio = naoqi.ALProxy( "ALAudioDevice", self.strNaoIp, 9559);
         audio.unsubscribe( self.getName());    
         print( "INF: SoundReceiver: stopped!" );
-        #print("self.wavfile",self.wavfile)
+        # get audio in wav format
+        self.rawToWav('test20')
+        #if( self.wavfile != None ):
+            #self.wavfile.close();
+        # clear audio buffer 
+        clear_sound_buffer()
+        # set recording to stop
+        recording = False
 
-        if( self.wavfile != None ):
-            self.wavfile.close();
 
 
     def rawToWav(self,filename):
@@ -135,26 +141,10 @@ class SoundReceiverModule(naoqi.ALModule):
         # This method receives the streaming microphone data. The buffer parameter contains an 
         # array of bytes that was read from the microphone
 
-        # start silence:
-        # while silent x seconds:
-            # throw data
-        
-        # else if noise (max array length) and if enough data: 
-            #   # set state to stop (don't get more data)
-                # unsubscribe
-                # get audio buffer/append array 
-                # send to file
-                # clear buffer
-                # set ready == True: # this means watson is ready to transcribe speech to text
 
+        # get sound data
         aSoundDataInterlaced = np.fromstring(str(buffer), dtype=np.int16);
-        # TODO: Analyze data (aSoundDataInterlaced)
-        #~ print( "len data: %s " % len( aSoundDataInterlaced));
-        #~ print( "data interlaced: " ),
-        #~ for i in range( 8 ):
-            #~ print( "%d, " % (aSoundDataInterlaced[i])),
-        #~ print( "" );
-        
+   
         # reshape data
         aSoundData = np.reshape(aSoundDataInterlaced, (nbOfChannels, nbrOfSamplesByChannel), 'F');
         # save to file
@@ -169,32 +159,23 @@ class SoundReceiverModule(naoqi.ALModule):
                 print( "Writing other channel sound to '%s'" % strFilenameOutChan );
             
         #tofile: Write array to a file as text or binary (default).
-        #~ aSoundDataInterlaced.tofile(self.outfile ); # wrote 4 channels
-        aSoundData[0].tofile(self.outfile); # wrote only one channel
-
-    # TODO: Analyze data (aSoundData)
-        #~ print( "aTimeStamp: %s" % aTimeStamp );
-        #~ print( "data wrotten: " ),
-        #~ for i in range( 8 ):
-            #~ print( "%d, " % (aSoundData[0][i]) ),
-        #~ print( "" );            
-
-        # will need following block of code to detect noise
-        # compute peak
-        #aPeakValue = np.max( aSoundData );
-        #if( aPeakValue > 16000 ):
-            #print( "Peak: %s" % aPeakValue );
-
-        #~ self.stop_recording(); # make naoqi crash        
+        # aSoundDataInterlaced.tofile(self.outfile ); # write 4 channels
+        aSoundData[0].tofile(self.outfile); # write only one channel
+          
         for nNumChannel in range( 1, nbOfChannels ):
             aSoundData[nNumChannel].tofile(self.aOutfile[nNumChannel-1]); 
-        self.rawToWav('test20')
+        
+        # add audio to buffer and time silence on both ends when speech detected
+        if speech_detected():
+            trim_silence()
+            add_to_buffer()
+            self.stop_recording()
 
-        # if enough data:
-           
-            # set state to stop (dont get more data), and then set ready variable
-            #  # write to file
-            # set state to ready for further processing, ready is boolean
+
+       
+
+        
+    
 
 
     

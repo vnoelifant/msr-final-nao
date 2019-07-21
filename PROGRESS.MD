@@ -81,6 +81,7 @@ This is a list of weekly goals as advised by Matthew Elwin, weekly accomplishmen
   File "/home/veronicanoel90/NAO/scripts/nao_recorder_2.py", line 224, in stop_recording
     user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript']
 IndexError: list index out of range
+catch index error and print results. Write pseudocode in functions first. Fill in one by 1. 
 
 
     * #### TODO

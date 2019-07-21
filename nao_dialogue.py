@@ -57,6 +57,8 @@ def main():
     """ Main entry point
 
     """
+    # Configure initial Naoqi and Watson settings
+    configure()
     parser = OptionParser()
     parser.add_option("--pip",
         help="Parent broker port. The IP address or your robot",
@@ -88,36 +90,39 @@ def main():
     SoundReceiver = SoundReceiverModule("SoundReceiver", pip)
 
     print("Please say something into NAO's microphone\n")
+    
+    # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
-    try:
-        while True:
-            #time.sleep(1)
+    #try:
+    # waiting while recording in progress
+    while True:
+        time.sleep(1)
+        # done recording; ready to transcribe speech
+        if recording = False:
+            transcribe()
+            detect_tone()
+            get_nao_response()
+            # ready to end conversation 
+            if watson_text_response = "Goodbye:"
+                break
+            else:
+                # start recording again
+                SoundReceiver.start_recording()
 
-
-        # if SoundReceiver.ready(): # ready == True from nao_recorder.py
-            # call transcribe # meat of system: state machine
-
-
-            # if I say stop:
-                # break out of loop
-            # else:
-                # SoundReceiver.start_recording() # start listening for speech again
-
+    """
     except KeyboardInterrupt:
-        print
         print "Interrupted by user, shutting down"
-        print("Transcribing audio....\n")
+        print "Transcribing audio...." 
         speech_recognition_results = transcribe_audio('test20.wav')
         print(json.dumps(speech_recognition_results, indent=2))
         with open('test20_response.txt', 'w') as responsefile:  
             json.dump(speech_recognition_results, responsefile)
-        user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] # figure out how to print more transcripts! (loop?)
-        # think there is an example of this in the javascript examples from winter quarter (sports buddy)
-        print("Text: " + user_speech_text + "\n")
+        user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
         watson_text_response = get_watson_response(user_speech_text)
         get_nao_response(watson_text_response)
         sys.exit(0)
+    """
 
 if __name__ == "__main__":
     main()
