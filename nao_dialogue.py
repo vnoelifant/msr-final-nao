@@ -58,7 +58,6 @@ def main():
 
     """
     # Configure initial Naoqi and Watson settings
-    configure()
     parser = OptionParser()
     parser.add_option("--pip",
         help="Parent broker port. The IP address or your robot",
@@ -99,12 +98,16 @@ def main():
     while True:
         time.sleep(1)
         # done recording; ready to transcribe speech
-        if recording = False:
-            transcribe()
-            detect_tone()
-            get_nao_response()
-            # ready to end conversation 
-            if watson_text_response = "Goodbye:"
+        if SoundReceiver.recording = False:
+            speech_recognition_results = transcribe_audio("test.wav")
+            user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
+            print("User Speech Text: " + user_speech_text + "\n")
+            watson_text_response = get_watson_response(user_speech_text)
+            print("Watson Text Response",watson_text_response)
+            # trigger to end conversation
+            if watson_text_response = "Ok goodbye":
+                print "stop conversation"
+                get_nao_response(watson_text_response)
                 break
             else:
                 # start recording again

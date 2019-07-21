@@ -57,13 +57,14 @@ class SoundReceiverModule(naoqi.ALModule):
             self.outfile = None;
             self.aOutfile = [None]*(4-1); # ASSUME max nbr channels = 4
             self.wavfile = None;
+            self.recording = False
         except BaseException, err:
             print( "ERR: SoundReceiverModule: loading error: %s" % str(err) );
 
     # __init__ - end of program
-    def __del__(self):
-        print( "SoundReceiverModule.__del__: cleaning everything");  
-        self.stop_recording();
+    #def __del__(self):
+    #    print( "SoundReceiverModule.__del__: cleaning everything");  
+    #    self.stop_recording();
 
     """
     module subscribe:
@@ -88,29 +89,29 @@ class SoundReceiverModule(naoqi.ALModule):
 
     # start recording
     def start_recording(self): 
-        recording = True
+        self.recording = True
         audio = naoqi.ALProxy( "ALAudioDevice", self.strNaoIp, 9559);
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         nSampleRate = 48000;
-        audio.setClientPreferences( self.getName(),  nSampleRate, nNbrChannelFlag, nDeinterleave); 
-        audio.subscribe( self.getName() );
+        audio.setClientPreferences(self.getName(),  nSampleRate, nNbrChannelFlag, nDeinterleave); 
+        audio.subscribe(self.getName() );
         print( "SoundReceiver: started!" );
 
+    # stop recording and unsubscribe from Naoqi
     def stop_recording(self): 
-        # stop recording and unsubscribe from Naoqi
         print( "INF: SoundReceiver: stopping..." );
         audio = naoqi.ALProxy( "ALAudioDevice", self.strNaoIp, 9559);
         audio.unsubscribe( self.getName());    
         print( "INF: SoundReceiver: stopped!" );
         # get audio in wav format
-        self.rawToWav('test20')
+        self.rawToWav('test')
         #if( self.wavfile != None ):
             #self.wavfile.close();
         # clear audio buffer 
-        clear_sound_buffer()
+        self.clear_sound_buffer()
         # set recording to stop
-        recording = False
+        self.recording = False
 
 
 
@@ -131,7 +132,9 @@ class SoundReceiverModule(naoqi.ALModule):
         while sample != "":
             self.wavfile.writeframes(sample)
             sample = f.read(4096)
-        os.remove(rawfile)
+        #os.remove(rawfile)
+        return filename + '.wav'
+
     """
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     
@@ -164,14 +167,28 @@ class SoundReceiverModule(naoqi.ALModule):
         for nNumChannel in range( 1, nbOfChannels ):
             aSoundData[nNumChannel].tofile(self.aOutfile[nNumChannel-1]); 
         
-        # add audio to buffer and time silence on both ends when speech detected
-        if speech_detected():
+        # condition on detecting speech to be transcribed
+        speech_detected = self.speech_detected()
+        if speech_detected:
             # trim silence on both ends of data
-            trim_silence()
-            # add detected speech to buffer
-            add_to_buffer()
+            self.trim_silence()
+            # add detected speech to sound buffer
+            self.add_to_buffer()
             # stop recording 
             self.stop_recording()
+
+    def speech_detected():
+        pass
+
+    def trim_silence():
+        pass
+
+    def add_to_buffer():
+        pass
+
+    def clear_audio_buffer():
+        pass
+
 
 
        
