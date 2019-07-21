@@ -49,7 +49,6 @@ class SoundReceiverModule(naoqi.ALModule):
     """
     Custom Module to access the microphone data from Nao. Module inherited from Naoqi ALModule.
     """
-
     def __init__(self, strModuleName, strNaoIp):
         try:
             naoqi.ALModule.__init__(self, strModuleName );
@@ -167,8 +166,11 @@ class SoundReceiverModule(naoqi.ALModule):
         
         # add audio to buffer and time silence on both ends when speech detected
         if speech_detected():
+            # trim silence on both ends of data
             trim_silence()
+            # add detected speech to buffer
             add_to_buffer()
+            # stop recording 
             self.stop_recording()
 
 
