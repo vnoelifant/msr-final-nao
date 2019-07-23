@@ -11,13 +11,14 @@ import os
 import wave
 from os.path import join, dirname
 import json
-#from naoqi import ALProxy
+from naoqi import ALProxy
+from naoqi import ALBroker
 from nao_recorder import SoundReceiverModule
 
 NAO_IP = "169.254.126.202" 
 
 def get_nao_response(watson_text):
-    tts = naoqi.ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
+    tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
     tts.say(watson_text)
 
 def get_watson_response(user_speech_text):
@@ -76,7 +77,7 @@ def main():
 
     # We need this broker to be able to construct NAOqi modules and subscribe to other modules
     # The broker must stay alive until the program exists
-    myBroker = naoqi.ALBroker("myBroker",
+    myBroker = ALBroker("myBroker",
        "0.0.0.0",   # listen to anyone
        0,           # find a free port and use it
        pip,         # parent broker IP
@@ -98,34 +99,27 @@ def main():
     while True:
         time.sleep(1)
         # done recording; ready to transcribe speech
-        if SoundReceiver.recording = False:
-            speech_recognition_results = transcribe_audio("test.wav")
+        if SoundReceiver.recording == False:
+            print "stopped recording, ready to transcribe"
+            speech_recognition_results = transcribe_audio("myspeech.wav")
             user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
             print("User Speech Text: " + user_speech_text + "\n")
             watson_text_response = get_watson_response(user_speech_text)
             print("Watson Text Response",watson_text_response)
             # trigger to end conversation
-            if watson_text_response = "Ok goodbye":
+            if watson_text_response == "Ok goodbye":
                 print "stop conversation"
                 get_nao_response(watson_text_response)
                 break
             else:
                 # start recording again
-                SoundReceiver.start_recording()
-
-    """
-    except KeyboardInterrupt:
-        print "Interrupted by user, shutting down"
-        print "Transcribing audio...." 
-        speech_recognition_results = transcribe_audio('test20.wav')
-        print(json.dumps(speech_recognition_results, indent=2))
-        with open('test20_response.txt', 'w') as responsefile:  
-            json.dump(speech_recognition_results, responsefile)
-        user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
-        watson_text_response = get_watson_response(user_speech_text)
-        get_nao_response(watson_text_response)
-        sys.exit(0)
-    """
+                SoundReceiver.start_recording() 
+    #except:
+        # closing
+        #myBroker.shutdown()
+        #print("disconnected")
+        #sys.exit(0)
+    
 
 if __name__ == "__main__":
     main()
