@@ -81,7 +81,8 @@ class SoundReceiverModule(ALModule):
         self.wavfile = None
         self.recording = False
         self.silent_cnt = SILENCE_COUNT
-        self.silence = 3000 # threshold to detect silence 
+        self.pause_recording = False
+        self.silence = 4000 # threshold to detect silence 
         # buffer for audio sound
         
         # buffer for silence
@@ -116,6 +117,7 @@ class SoundReceiverModule(ALModule):
 
     # start recording
     def start_recording(self): 
+        self.recording = True
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         nSampleRate = 48000;
@@ -123,29 +125,38 @@ class SoundReceiverModule(ALModule):
         self.ALAudioDevice.subscribe(self.getName());
         self.audioBuffer = StringIO.StringIO()
         print "audio buffer when recording",self.audioBuffer.getvalue()
-        self.recording = True
         print( "SoundReceiver: started!" )
 
-    # stop recording and unsubscribe from Naoqi
-    def stop_recording(self): 
-        print( "SoundReceiver: stopping..." );
+    # resume recording from Naoqi
+    def resume_recording(self):
+        self.pause_recording = False
+        print( "SoundReceiver: resuming..." );
+        #self.pause_recording = False
+        #self.start_recording()
+        #print "pause flag",self.pause_recording
+    # pause recording from Naoqi
+    def paus_recording(self): 
+        print( "SoundReceiver: pausing..." );
+        self.pause_recording = True
+        #print "pause flag",self.pause_recording
         #self.ALAudioDevice.unsubscribe(self.getName()) # error when here
         print "convert raw audio to wav"  
-        #print "audio buffer before wav",self.audioBuffer.getvalue()
+        print "audio buffer before wav",self.audioBuffer
         # get audio in wav format
         self.rawToWav(self.audioBuffer)
-        #if( self.wavfile != None ):
-            #self.wavfile.close();
         print "clearing audio buffer"  
         # clear audio buffer 
         self.clear_audio_buffer()
         print "reset recording flag to false"
         # set recording to stop
         self.recording = False
+        #self.ALAudioDevice.unsubscribe(self.getName())
+        #self.recording = True
+        # put a flag on processRemote
 
     def rawToWav(self,data):
-        filename = 'output_'+str(int(time.time()))
-        #filename = "myspeech"
+        #filename = 'output_'+str(int(time.time()))
+        filename = "myspeech9"
         print "data type", type(data)
         data = ''.join(data)
         self.wavfile = wave.open(filename + '.wav', 'wb')
@@ -160,52 +171,79 @@ class SoundReceiverModule(ALModule):
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     """
     def processRemote(self, nbOfChannels, nbrOfSamplesByChannel, aTimeStamp, buffer):
-        # This method receives the streaming microphone data. The buffer parameter contains an 
-        # array of bytes that was read from the microphone
-        # get sound data
-        aSoundDataInterlaced = np.fromstring(str(buffer), dtype=np.int16);
-       
-        # reshape data
-        aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
+        #print "pause flag",self.pause_recording
+        if self.pause_recording == False:
 
-        print aSoundData
-        print len(aSoundData)
-        print type(aSoundData),aSoundData.shape
-        print np.amax(aSoundData)
-        
-        # sound is below threshold and detected as silence
-        sound_silent = self.is_silence(aSoundData)
-        
-        # set conditions to detect speech
-        speech = False
-        
-        # increment silence count if silence detected
-        if sound_silent:
-            print "detected silence"
-            print "silence speech flag", speech
-            self.silent_cnt += 1
-            print "silence count",self.silent_cnt
-        # speech detected: reset silence count to zero and set speech flag to True
+            # This method receives the streaming microphone data. The buffer parameter contains an 
+            # array of bytes that was read from the microphone
+            # get sound data
+            aSoundDataInterlaced = np.fromstring(str(buffer), dtype=np.int16);
+           
+            # reshape data
+            aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
+
+            print aSoundData
+            print len(aSoundData)
+            print type(aSoundData),aSoundData.shape
+            print np.amax(aSoundData)
+            
+            # sound is below threshold and detected as silence
+            sound_silent = self.is_silence(aSoundData)
+            
+            # set conditions to detect speech
+            speech = False
+            
+            # increment silence count if silence detected
+            if sound_silent:
+                print "detected silence"
+                print "silence speech flag", speech
+                self.silent_cnt += 1
+                print "silence count",self.silent_cnt
+                #self.audioBuffer.write(aSoundData[0].tostring())
+            # speech detected: reset silence count to zero and set speech flag to True
+            else:
+                print "detected speech"
+                #self.silent_cnt = SILENCE_COUNT
+                print "detected speech silence count",self.silent_cnt
+                speech = True
+                print "detected speech flag", speech
+            self.audioBuffer.write(aSoundData[0].tostring())
+           
+            # speech is detected if sound reached peak,is surrounded by silence, and silence
+            # is detected for over 10 counts
+            if speech == True and self.silent_cnt >= 10:
+                print "detected speech data", aSoundData[0],len(aSoundData[0]),type(aSoundData[0])
+                # average out volume of sound data
+                self.avg_volume(aSoundData[0])
+                # trim silence on both ends of data
+                self.trim_silence(aSoundData[0])
+                # add detected speech to sound buffer
+                self.add_to_buffer(aSoundData[0])
+                # pause recording 
+                "pausing recording"
+                self.paus_recording()
         else:
-            print "detected speech"
-            #self.silent_cnt = SILENCE_COUNT
-            print "detected speech silence count",self.silent_cnt
-            speech = True
-            print "detected speech flag", speech
-       
-        # speech is detected if sound reached peak,is surrounded by silence, and silence
-        # is detected for over 10 counts
-        if speech == True and self.silent_cnt >= 10:
-            print "detected speech data", aSoundData[0],len(aSoundData[0]),type(aSoundData[0])
-            # average out volume of sound data
-            self.avg_volume(aSoundData[0])
-            # trim silence on both ends of data
-            self.trim_silence(aSoundData[0])
-            # add detected speech to sound buffer
-            self.add_to_buffer(aSoundData[0])
-            # stop recording 
-            self.stop_recording()
-                
+            print "paused!!!!!!!!!!!!!!!!!"
+            # 1. why printing pause?
+            # 2. why does after it transcribe once does it keep transcribing
+            # what could be causing this?
+            # what is the data that I am getting? might need to save data across multiple process data
+            # append to buffer until detect silence 
+            # how long is audio sample 
+            # getting different data and different sentences
+            # save data from previous
+            # process buffer
+            # no sound sound no sound
+            # keep adding sound to buffer
+            # run detection on whole buffer
+            # when there is a sentence save to wav file. Clear audio buffer, trimming silence
+            # has a sentence been uttered
+            # if yes, send to watson
+            # add to buffer when something to send to watson, enough non-silence
+            # 3. why index in range error?
+            # blocking main thread, does main thread continue 
+            # processRemote is running in background 
+            # send more than 1 processRemote function
 
 
     def is_silence(self, aSoundData):
@@ -223,12 +261,15 @@ class SoundReceiverModule(ALModule):
     def add_to_buffer(self,aSoundData):
         print "adding raw speech data to audio buffer"
         self.audioBuffer.write(aSoundData.tostring())
+        # set data to start of file
+        self.audioBuffer.seek(0)
         print "raw audio buffer contents",self.audioBuffer
     def clear_audio_buffer(self):
         print "clearing the audio buffer"
-        self.audioBuffer.truncate(0)
-        self.audioBuffer.seek(0)
+        self.audioBuffer = None
         print "audio buffer when clear",self.audioBuffer
+
+    
 
 
 

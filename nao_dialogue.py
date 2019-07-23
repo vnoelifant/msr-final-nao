@@ -94,31 +94,40 @@ def main():
     # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
-    #try:
+    try:
     # waiting while recording in progress
-    while True:
-        time.sleep(1)
-        # done recording; ready to transcribe speech
-        if SoundReceiver.recording == False:
-            print "stopped recording, ready to transcribe"
-            speech_recognition_results = transcribe_audio("myspeech.wav")
-            user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
-            print("User Speech Text: " + user_speech_text + "\n")
-            watson_text_response = get_watson_response(user_speech_text)
-            print("Watson Text Response",watson_text_response)
-            # trigger to end conversation
-            if watson_text_response == "Ok goodbye":
-                print "stop conversation"
-                get_nao_response(watson_text_response)
-                break
-            else:
-                # start recording again
-                SoundReceiver.start_recording() 
-    #except:
+        while True:
+            time.sleep(1)
+            # done recording; ready to transcribe speech
+            if SoundReceiver.recording == False:
+                print "stopped recording, ready to transcribe"
+                #filename = SoundReceiver.rawToWav()
+                speech_recognition_results = transcribe_audio("myspeech9.wav")
+                #speech_recognition_results = transcribe_audio(filename)
+                print(json.dumps(speech_recognition_results, indent=2))
+                user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
+                print("User Speech Text: " + user_speech_text + "\n")
+                watson_text_response = get_watson_response(user_speech_text)
+                print("Watson Text Response",watson_text_response)
+                #get_nao_response(watson_text_response)
+                # trigger to end conversation
+                if watson_text_response == "Ok goodbye":
+                    print "stop conversation"
+                    get_nao_response(watson_text_response)
+                    break
+                else:
+                    # start recording again
+                    get_nao_response(watson_text_response)
+                    #SoundReceiver.start_recording() 
+                    SoundReceiver.resume_recording()
+    #myBroker.shutdown()
+    #print("disconnected")
+    #sys.exit(0)
+    except KeyboardInterrupt:
         # closing
-        #myBroker.shutdown()
-        #print("disconnected")
-        #sys.exit(0)
+        myBroker.shutdown()
+        print("disconnected")
+        sys.exit(0)
     
 
 if __name__ == "__main__":
