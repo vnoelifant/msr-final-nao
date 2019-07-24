@@ -81,8 +81,8 @@ class SoundReceiverModule(ALModule):
         self.wavfile = None
         self.recording = False
         self.silent_cnt = SILENCE_COUNT
-        self.pause_recording = False
-        self.silence = 4000 # threshold to detect silence 
+        self.paused = False
+        self.threshold = 14000 # threshold to detect speech
         # buffer for audio sound
         
         # buffer for silence
@@ -129,16 +129,14 @@ class SoundReceiverModule(ALModule):
 
     # resume recording from Naoqi
     def resume_recording(self):
-        self.pause_recording = False
+        self.paused = False
         print( "SoundReceiver: resuming..." );
-        #self.pause_recording = False
-        #self.start_recording()
-        #print "pause flag",self.pause_recording
+        #print "pause flag",self.paused
     # pause recording from Naoqi
-    def paus_recording(self): 
+    def pause_recording(self): 
         print( "SoundReceiver: pausing..." );
-        self.pause_recording = True
-        #print "pause flag",self.pause_recording
+        self.paused = True
+        #print "pause flag",self.paused
         #self.ALAudioDevice.unsubscribe(self.getName()) # error when here
         print "convert raw audio to wav"  
         print "audio buffer before wav",self.audioBuffer
@@ -156,7 +154,7 @@ class SoundReceiverModule(ALModule):
 
     def rawToWav(self,data):
         #filename = 'output_'+str(int(time.time()))
-        filename = "myspeech9"
+        filename = "myspeech11"
         print "data type", type(data)
         data = ''.join(data)
         self.wavfile = wave.open(filename + '.wav', 'wb')
@@ -171,8 +169,8 @@ class SoundReceiverModule(ALModule):
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     """
     def processRemote(self, nbOfChannels, nbrOfSamplesByChannel, aTimeStamp, buffer):
-        #print "pause flag",self.pause_recording
-        if self.pause_recording == False:
+        #print "pause flag",self.paused
+        if self.paused == False:
 
             # This method receives the streaming microphone data. The buffer parameter contains an 
             # array of bytes that was read from the microphone
@@ -187,31 +185,19 @@ class SoundReceiverModule(ALModule):
             print type(aSoundData),aSoundData.shape
             print np.amax(aSoundData)
             
-            # sound is below threshold and detected as silence
-            sound_silent = self.is_silence(aSoundData)
+             # detected speech (above sound threshold)
+            speech_detected = self.is_speech_detected(aSoundData)
             
-            # set conditions to detect speech
-            speech = False
+            # increment silence count if sound below threshold)
+            self.silent_cnt += 1
+            print "silent_cnt",self.silent_cnt
             
-            # increment silence count if silence detected
-            if sound_silent:
-                print "detected silence"
-                print "silence speech flag", speech
-                self.silent_cnt += 1
-                print "silence count",self.silent_cnt
-                #self.audioBuffer.write(aSoundData[0].tostring())
-            # speech detected: reset silence count to zero and set speech flag to True
-            else:
-                print "detected speech"
-                #self.silent_cnt = SILENCE_COUNT
-                print "detected speech silence count",self.silent_cnt
-                speech = True
-                print "detected speech flag", speech
+            # write audio data to in memory file
             self.audioBuffer.write(aSoundData[0].tostring())
            
             # speech is detected if sound reached peak,is surrounded by silence, and silence
             # is detected for over 10 counts
-            if speech == True and self.silent_cnt >= 10:
+            if speech_detected and  self.silent_cnt == 10:
                 print "detected speech data", aSoundData[0],len(aSoundData[0]),type(aSoundData[0])
                 # average out volume of sound data
                 self.avg_volume(aSoundData[0])
@@ -221,34 +207,14 @@ class SoundReceiverModule(ALModule):
                 self.add_to_buffer(aSoundData[0])
                 # pause recording 
                 "pausing recording"
-                self.paus_recording()
-        else:
-            print "paused!!!!!!!!!!!!!!!!!"
-            # 1. why printing pause?
-            # 2. why does after it transcribe once does it keep transcribing
-            # what could be causing this?
-            # what is the data that I am getting? might need to save data across multiple process data
-            # append to buffer until detect silence 
-            # how long is audio sample 
-            # getting different data and different sentences
-            # save data from previous
-            # process buffer
-            # no sound sound no sound
-            # keep adding sound to buffer
-            # run detection on whole buffer
-            # when there is a sentence save to wav file. Clear audio buffer, trimming silence
-            # has a sentence been uttered
-            # if yes, send to watson
-            # add to buffer when something to send to watson, enough non-silence
-            # 3. why index in range error?
-            # blocking main thread, does main thread continue 
-            # processRemote is running in background 
-            # send more than 1 processRemote function
+                self.pause_recording()
+        #else:
+            #print "paused!!!!!!!!!!!!!!!!!"
 
 
-    def is_silence(self, aSoundData):
-        "Returns 'True' if sound data below peak sound threshold"
-        return np.amax(aSoundData) < self.silence 
+    def is_speech_detected(self, aSoundData):
+        "Returns 'True' if sound data at peak"
+        return np.amax(aSoundData) > self.threshold
 
     def avg_volume(self,aSoundData):
          #avg = np.mean(aSoundData, axis = 1)
@@ -269,7 +235,7 @@ class SoundReceiverModule(ALModule):
         self.audioBuffer = None
         print "audio buffer when clear",self.audioBuffer
 
-    
+
 
 
 
