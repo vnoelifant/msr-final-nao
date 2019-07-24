@@ -90,6 +90,36 @@ catch index error and print results. Write pseudocode in functions first. Fill i
       
 
   * ### **7/18/19 Meeting Minutes**:
-    * 
+    * Commit regularly
+    * Revisit the pseudocode from meeting on 7/10/19 and get that working
 
-  
+* ## **Week 7/16/19 Goals**
+  * At the meeting on 7/18 pseudocode was developed that describes the basic operation of the system that I am developing.  This week's goal is to implement that code and get it working.
+  * ### **Meeting Agenda**:
+    * #### Accomplishments
+      * Major code updates that integrates the developed pseudocode. Updates include:
+        * Silence detection
+        * Peak sound detection
+        * Pause recording flag and pause/resume recording functions
+        * Averaging out volume of sound
+        * Re-initializing audio buffer (in memory file) when resuming recording
+        * Previous sound before peak sound reached added to buffer
+        * See demo of code below:
+ 
+      [![IMAGE ALT TEXT](http://img.youtube.com/vi/9iVaZ5tdjmw/0.jpg)](http://www.youtube.com/watch?v=9iVaZ5tdjmw "Nao Dialogue Test")
+    
+    * #### Issues
+      * Had initial trouble in getting enough .wav audio data
+      * Trouble with unsubsribing (stops program too soon). Discussed with Matt on approaches. 
+      * Transcription seems to miss words: In playing the .wav file, the sound sounds very choppy. 
+    * #### TODO
+      * Trim leading and trailing silence in audio buffer
+      * look at index in range error in Watson transcription
+      * look into how to check whether a sentense has been uttered
+      * analyze audio data
+        * how long is audio sample?
+        * might need to save data across multiple process remote data calls
+        * may need to get different data and different sentences
+      
+  * ### **7/25/19 Meeting Minutes**:
+    * 
