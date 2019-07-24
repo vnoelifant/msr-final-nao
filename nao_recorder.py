@@ -166,8 +166,9 @@ class SoundReceiverModule(ALModule):
         "Returns 'True' if sound data past sound threshold"
         return np.amax(aSoundData) > self.threshold
 
-    def is_speech_detected:
+    def is_speech_detected(self,aSoundData):
         "Returns 'True' if speech is detected"
+        # True if silence then sound then silence in audio buffer
         pass
     
     def avg_volume(self,aSoundData):
