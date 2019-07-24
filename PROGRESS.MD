@@ -110,6 +110,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
     
     * #### Issues
       * Had initial trouble in getting enough .wav audio data
+        * resolved with  adding .seek(0) python function before converting to .wav. This function offsets the raw audio file to the beginning of file
       * Trouble with unsubsribing (stops program too soon). Discussed with Matt on approaches. 
       * Transcription seems to miss words: In playing the .wav file, the sound sounds very choppy. 
     * #### TODO
