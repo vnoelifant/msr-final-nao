@@ -2,20 +2,8 @@
 
 ###########################################################
 # Retrieve NAO  audio buffer
-# Syntax
-#    python scriptname --pip <ip> --pport <port>
-# 
-#    --pip <ip>: specify the ip of your robot (without specification it will use NAO_IP variable defined
-# in main program (nao_stt_tts.py)
-
 ###########################################################
-
-
-#~ NAO_IP = "10.0.253.99" # Nao Alex Blue
-
-
 from optparse import OptionParser
-#import naoqi
 from naoqi import ALModule, ALProxy,ALBroker
 import numpy as np
 import time
@@ -42,8 +30,6 @@ import traceback
 import logging
 import StringIO
 import sys
-# Reference: 
-
 
 # Reference: https://www.generationrobots.com/media/NAO%20Next%20Gen/FeaturePaper(AudioSignalProcessing)%20(1).pdf
 """
@@ -62,6 +48,7 @@ right  microphone  /  3:  front  microphone  /  4:  rear  microphone.
 
 """
 
+# set silence count for silence detection counting
 SILENCE_COUNT = 0
 class SoundReceiverModule(ALModule):
     """
@@ -78,21 +65,13 @@ class SoundReceiverModule(ALModule):
         self.BIND_PYTHON(strModuleName,"processRemote")
         self.ALAudioDevice = ALProxy("ALAudioDevice", self.strNaoIp, 9559)
         self.audioBuffer = None
+        # create previous sound data to add to buffer before peak sound reached
+        self.previous_sound = None
         self.wavfile = None
         self.recording = False
         self.silent_cnt = SILENCE_COUNT
         self.paused = False
         self.threshold = 14000 # threshold to detect speech
-        # buffer for audio sound
-        
-        # buffer for silence
-        #self.silenceBuffer = []
-        #self.silent_cnt = 0
-
-    # __init__ - end of program
-    #def __del__(self):
-    #    print( "SoundReceiverModule.__del__: cleaning everything");  
-    #    self.stop_recording();
 
     """
     module subscribe:
@@ -114,8 +93,7 @@ class SoundReceiverModule(ALModule):
     This call must be made before the call to ALAudioDeviceProxy::subscribe() or startDetection() to be taken into account.
 
 `   """
-
-    # start recording
+    # subscribe to NAOQI Audio device and start recording 
     def start_recording(self): 
         self.recording = True
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
@@ -123,39 +101,32 @@ class SoundReceiverModule(ALModule):
         nSampleRate = 48000;
         self.ALAudioDevice.setClientPreferences(self.getName(), nSampleRate, nNbrChannelFlag, nDeinterleave); # setting same as default generate a bug !?!
         self.ALAudioDevice.subscribe(self.getName());
+        # create in memory buffer file
         self.audioBuffer = StringIO.StringIO()
-        print "audio buffer when recording",self.audioBuffer.getvalue()
         print( "SoundReceiver: started!" )
 
     # resume recording from Naoqi
     def resume_recording(self):
+        self.recording = True
+        # recreate in memory buffer file
+        self.audioBuffer = StringIO.StringIO()
         self.paused = False
         print( "SoundReceiver: resuming..." );
         #print "pause flag",self.paused
+    
     # pause recording from Naoqi
     def pause_recording(self): 
         print( "SoundReceiver: pausing..." );
         self.paused = True
-        #print "pause flag",self.paused
         #self.ALAudioDevice.unsubscribe(self.getName()) # error when here
-        print "convert raw audio to wav"  
-        print "audio buffer before wav",self.audioBuffer
         # get audio in wav format
         self.rawToWav(self.audioBuffer)
-        print "clearing audio buffer"  
-        # clear audio buffer 
-        self.clear_audio_buffer()
-        print "reset recording flag to false"
         # set recording to stop
         self.recording = False
-        #self.ALAudioDevice.unsubscribe(self.getName())
-        #self.recording = True
-        # put a flag on processRemote
 
     def rawToWav(self,data):
         #filename = 'output_'+str(int(time.time()))
-        filename = "myspeech11"
-        print "data type", type(data)
+        filename = "myspeech16"
         data = ''.join(data)
         self.wavfile = wave.open(filename + '.wav', 'wb')
         self.wavfile.setnchannels(1)
@@ -180,60 +151,58 @@ class SoundReceiverModule(ALModule):
             # reshape data
             aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
 
-            print aSoundData
-            print len(aSoundData)
-            print type(aSoundData),aSoundData.shape
-            print np.amax(aSoundData)
-            
-             # detected speech (above sound threshold)
-            speech_detected = self.is_speech_detected(aSoundData)
-            
             # increment silence count if sound below threshold)
             self.silent_cnt += 1
-            print "silent_cnt",self.silent_cnt
-            
+            # create previous sound data to add to buffer before peak sound reached
+            self.previous_sound = aSoundData
             # write audio data to in memory file
             self.audioBuffer.write(aSoundData[0].tostring())
-           
-            # speech is detected if sound reached peak,is surrounded by silence, and silence
-            # is detected for over 10 counts
-            if speech_detected and  self.silent_cnt == 10:
-                print "detected speech data", aSoundData[0],len(aSoundData[0]),type(aSoundData[0])
+            
+            # detected speech (above sound threshold)
+            speech_at_peak = self.is_speech_at_peak(aSoundData)
+            
+            # sound at peak conditions
+            if speech_at_peak:
+                # reset silence count
+                self.silent_cnt = SILENCE_COUNT
+                # add sound data to buffer before peak sound
+                self.add_previous_sound(self.previous_sound)
+        
+            # speech is detected if silence is detected for over 10 counts
+            if self.silent_cnt == 12: #and self.paused == False:
                 # average out volume of sound data
                 self.avg_volume(aSoundData[0])
                 # trim silence on both ends of data
                 self.trim_silence(aSoundData[0])
-                # add detected speech to sound buffer
-                self.add_to_buffer(aSoundData[0])
+                # get audio buffer ready
+                self.audio_buffer_ready()
                 # pause recording 
                 "pausing recording"
                 self.pause_recording()
-        #else:
-            #print "paused!!!!!!!!!!!!!!!!!"
+            
 
-
-    def is_speech_detected(self, aSoundData):
+    def is_speech_at_peak(self, aSoundData):
         "Returns 'True' if sound data at peak"
         return np.amax(aSoundData) > self.threshold
 
+    def add_previous_sound(self,previous_sound):
+        if not previous_sound is None:
+            self.audioBuffer.write(previous_sound[0].tostring())
+
     def avg_volume(self,aSoundData):
-         #avg = np.mean(aSoundData, axis = 1)
-         #print "avg: %s" % avg
-        pass
- 
+        avg = np.mean(aSoundData)
+    
     def trim_silence(self,aSoundData):
         pass
 
-    def add_to_buffer(self,aSoundData):
-        print "adding raw speech data to audio buffer"
-        self.audioBuffer.write(aSoundData.tostring())
-        # set data to start of file
+    def audio_buffer_ready(self):
+        # clear previous sound buffer
+        self.previous_sound = None
+        print "pre audio buffer when clear",self.previous_sound
+        # set audio data to start of file
         self.audioBuffer.seek(0)
         print "raw audio buffer contents",self.audioBuffer
-    def clear_audio_buffer(self):
-        print "clearing the audio buffer"
-        self.audioBuffer = None
-        print "audio buffer when clear",self.audioBuffer
+ 
 
 
 

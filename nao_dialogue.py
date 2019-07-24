@@ -1,3 +1,13 @@
+###########################################################
+# Main program to converse with Nao
+# Syntax
+#    python scriptname --pip <ip> --pport <port>
+# 
+#    --pip <ip>: specify the ip of your robot (without specification it will use NAO_IP variable defined
+# in main program)
+
+###########################################################
+
 import os
 import json
 from os.path import join, dirname
@@ -14,6 +24,7 @@ import json
 from naoqi import ALProxy
 from naoqi import ALBroker
 from nao_recorder import SoundReceiverModule
+
 
 NAO_IP = "169.254.126.202" 
 
@@ -102,7 +113,7 @@ def main():
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
                 #filename = SoundReceiver.rawToWav()
-                speech_recognition_results = transcribe_audio("myspeech11.wav")
+                speech_recognition_results = transcribe_audio("myspeech16.wav")
                 #speech_recognition_results = transcribe_audio(filename)
                 print(json.dumps(speech_recognition_results, indent=2))
                 user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
