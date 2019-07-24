@@ -48,8 +48,6 @@ right  microphone  /  3:  front  microphone  /  4:  rear  microphone.
 
 """
 
-# set silence count for silence detection counting
-SILENCE_COUNT = 0
 class SoundReceiverModule(ALModule):
     """
     Custom Module to access the microphone data from Nao. Module inherited from Naoqi ALModule.
@@ -65,13 +63,11 @@ class SoundReceiverModule(ALModule):
         self.BIND_PYTHON(strModuleName,"processRemote")
         self.ALAudioDevice = ALProxy("ALAudioDevice", self.strNaoIp, 9559)
         self.audioBuffer = None
-        # create previous sound data to add to buffer before peak sound reached
-        self.previous_sound = None
         self.wavfile = None
         self.recording = False
         self.silent_cnt = SILENCE_COUNT
         self.paused = False
-        self.threshold = 14000 # threshold to detect speech
+        self.threshold = 3000 # threshold to detect speech
 
     """
     module subscribe:
@@ -112,7 +108,6 @@ class SoundReceiverModule(ALModule):
         self.audioBuffer = StringIO.StringIO()
         self.paused = False
         print( "SoundReceiver: resuming..." );
-        #print "pause flag",self.paused
     
     # pause recording from Naoqi
     def pause_recording(self): 
@@ -151,25 +146,12 @@ class SoundReceiverModule(ALModule):
             # reshape data
             aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
 
-            # increment silence count if sound below threshold)
-            self.silent_cnt += 1
-            # create previous sound data to add to buffer before peak sound reached
-            self.previous_sound = aSoundData
-            # write audio data to in memory file
+            # append buffer to audio buffer
             self.audioBuffer.write(aSoundData[0].tostring())
             
-            # detected speech (above sound threshold)
-            speech_at_peak = self.is_speech_at_peak(aSoundData)
-            
-            # sound at peak conditions
-            if speech_at_peak:
-                # reset silence count
-                self.silent_cnt = SILENCE_COUNT
-                # add sound data to buffer before peak sound
-                self.add_previous_sound(self.previous_sound)
-        
-            # speech is detected if silence is detected for over 10 counts
-            if self.silent_cnt == 12: #and self.paused == False:
+            # speech is detected
+            # TODO: Update conditions
+            if speech_detected:
                 # average out volume of sound data
                 self.avg_volume(aSoundData[0])
                 # trim silence on both ends of data
@@ -179,16 +161,15 @@ class SoundReceiverModule(ALModule):
                 # pause recording 
                 "pausing recording"
                 self.pause_recording()
-            
 
-    def is_speech_at_peak(self, aSoundData):
-        "Returns 'True' if sound data at peak"
+    def is_sound(self, aSoundData):
+        "Returns 'True' if sound data past sound threshold"
         return np.amax(aSoundData) > self.threshold
 
-    def add_previous_sound(self,previous_sound):
-        if not previous_sound is None:
-            self.audioBuffer.write(previous_sound[0].tostring())
-
+    def is_speech_detected:
+        "Returns 'True' if speech is detected"
+        pass
+    
     def avg_volume(self,aSoundData):
         avg = np.mean(aSoundData)
     
@@ -196,12 +177,9 @@ class SoundReceiverModule(ALModule):
         pass
 
     def audio_buffer_ready(self):
-        # clear previous sound buffer
-        self.previous_sound = None
-        print "pre audio buffer when clear",self.previous_sound
         # set audio data to start of file
         self.audioBuffer.seek(0)
-        print "raw audio buffer contents",self.audioBuffer
+
  
 
 
