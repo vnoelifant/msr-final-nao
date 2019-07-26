@@ -151,7 +151,6 @@ class SoundReceiverModule(ALModule):
            
             # reshape data
             aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
-            dData[aSoundData > self.threshold]
             # add sound data to buffer
             self.audioBuffer = aSoundData[0]
             #convert buffer to list
