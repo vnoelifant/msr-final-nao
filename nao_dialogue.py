@@ -113,7 +113,7 @@ def main():
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
                 #filename = SoundReceiver.rawToWav()
-                speech_recognition_results = transcribe_audio("myspeech16.wav")
+                speech_recognition_results = transcribe_audio("out2.wav")
                 #speech_recognition_results = transcribe_audio(filename)
                 print(json.dumps(speech_recognition_results, indent=2))
                 user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
