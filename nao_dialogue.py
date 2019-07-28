@@ -47,7 +47,6 @@ def get_watson_response(user_speech_text):
     watson_text_response = response['output']['text'][0]
     watson_text_response = '{}'.format(watson_text_response)
     return watson_text_response
-    #print('Watson says: ',watson_text,type(watson_text))
 
 def transcribe_audio(path_to_audio_file):
     # initialize speech to text service
@@ -97,6 +96,7 @@ def main():
 
     # Warning: SoundReceiver must be a global variable
     # The name given to the constructor must be the name of the variable
+    #fileCounter += 1
     global SoundReceiver
     SoundReceiver = SoundReceiverModule("SoundReceiver", pip)
 
@@ -113,7 +113,8 @@ def main():
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
                 #filename = SoundReceiver.rawToWav()
-                speech_recognition_results = transcribe_audio("out2.wav")
+
+                speech_recognition_results = transcribe_audio(SoundReceiver.filename + ".wav")
                 #speech_recognition_results = transcribe_audio(filename)
                 print(json.dumps(speech_recognition_results, indent=2))
                 user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
@@ -129,6 +130,7 @@ def main():
                     # start recording again
                     get_nao_response(watson_text_response)
                     #SoundReceiver.start_recording() 
+                    print "resuming"
                     SoundReceiver.resume_recording()
     
     except KeyboardInterrupt:

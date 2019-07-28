@@ -13,6 +13,8 @@ import wave
 from os.path import join, dirname
 import json
 import StringIO
+from struct import pack
+#from array import array
 from optparse import OptionParser
 import naoqi
 from naoqi import ALModule, ALProxy, ALBroker
@@ -31,6 +33,8 @@ import logging
 import StringIO
 from collections import deque
 import sys
+from raw_to_wav import rawToWav
+
 
 # Reference: https://www.generationrobots.com/media/NAO%20Next%20Gen/FeaturePaper(AudioSignalProcessing)%20(1).pdf
 """
@@ -68,8 +72,9 @@ class SoundReceiverModule(ALModule):
         self.recording = False
         self.paused = False
         self.silenceBuff = []
-        self.threshold = 3000 # threshold to detect speech
-        self.speech = [] # initialize speech buffer to send for transcription
+        self.threshold = 1400 # threshold to detect speech
+        self.speech = []# initialize speech buffer to send for transcription
+        self.filename = '' # name of soeech data file
         
 
     """
@@ -99,7 +104,8 @@ class SoundReceiverModule(ALModule):
         nDeinterleave = 0;
         self.nSampleRate = 48000;
         self.CHUNK = 4096
-        self.SILENCE_LIMIT = 4 # seconds of silence duration
+        self.SILENCE_LIMIT = 5 # seconds of silence duration
+        self.PREV_AUDIO = 0.5
         self.sub_chunk = self.nSampleRate/self.CHUNK 
         self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
         self.ALAudioDevice.setClientPreferences(self.getName(), self.nSampleRate, nNbrChannelFlag, nDeinterleave); # setting same as default generate a bug !?!
@@ -113,31 +119,46 @@ class SoundReceiverModule(ALModule):
         print( "SoundReceiver: resuming..." );
     
     # pause recording from Naoqi
-    def pause_recording(self): 
+    def pause_and_transcribe(self,data): 
         print( "SoundReceiver: pausing..." );
         self.paused = True
         #self.ALAudioDevice.unsubscribe(self.getName()) 
-        # get audio in wav format
-        print "convert to wav"
-        self.rawToWav(self.speech)
+        # convert list to np array
+        data = np.asarray(data, dtype=np.int16, order=None)
+        self.speech_to_file(data)
         # set recording to stop
-        print "reset"
-        self.reset()
         self.recording = False
+        # print "reset"
+        self.reset()
 
+    def speech_to_file(self,data):
+        self.filename = 'output_'+str(int(time.time()))
+        outfile = open(self.filename + ".raw", "wb")
+        data.tofile(outfile)
+        outfile.close()
+        print "get to wav format"
+        self.rawToWav(self.filename)
 
-    def rawToWav(self,data):
-        #filename = 'output_'+str(int(time.time()))
-        filename = "out2"
-        data = ''.join(data)
-        self.wavfile = wave.open(filename + '.wav', 'wb')
+    def rawToWav(self,filename):
+        rawfile = filename + ".raw"
+        if not os.path.isfile(rawfile):
+            return
+
+        self.wavfile = wave.open(filename + ".wav", "wb")
+        self.wavfile.setframerate(48000)
         self.wavfile.setnchannels(1)
         self.wavfile.setsampwidth(2)
-        self.wavfile.setframerate(48000)  
-        self.wavfile.writeframes(data)
-        self.wavfile.close()
-        return filename + '.wav'
-  
+
+        f = open(rawfile, "rb")
+        sample = f.read(4096)
+        print 'writing file: ' + filename + '.wav'
+
+        while sample != "":
+            outfile.writeframes(sample)
+            sample = f.read(4096)
+
+        return self.wavfile
+ 
     """
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     """
@@ -165,24 +186,24 @@ class SoundReceiverModule(ALModule):
                 self.speech.extend(self.audioBuffer)
                 # average out volume of sound data
                 self.avg_volume(self.speech)
-                # pause recording 
-                "pausing recording"
-                self.pause_recording()
+                # pausing recording and getting ready to transcribe
+                self.pause_and_transcribe(self.speech)
 
-    def is_speech_detected(self,aSoundData):
+
+    def is_speech_detected(self,data):
         "Returns 'True' if speech is detected"
         # True if at least one value of sound detected within silence window
-        # returns False if there is no sound for silence seconds duration
-        return (sum([sound > self.threshold for sound in aSoundData]) > 0)     
+        return (sum([sound > self.threshold for sound in data]) > 0)     
     
-    def avg_volume(self,aSoundData):
+    def avg_volume(self,data):
         pass
    
     def reset(self):
         # clear buffers
         self.speech = []
         self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
-
+      
+    
 
     
  
