@@ -23,7 +23,7 @@ from os.path import join, dirname
 import json
 from naoqi import ALProxy
 from naoqi import ALBroker
-from nao_recorder import SoundReceiverModule
+from nao_recorder_v2 import SoundReceiverModule
 
 
 NAO_IP = "169.254.126.202" 
@@ -60,7 +60,7 @@ def transcribe_audio(path_to_audio_file):
                 content_type='audio/wav',
                 word_alternatives_threshold=0.9,
                 keywords=['hey', 'hi','watson','friend','meet'],
-                keywords_threshold=0.5
+                keywords_threshold=0.3
             ).get_result()
 
 
@@ -105,6 +105,7 @@ def main():
     # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
+
     try:
         # waiting while recording in progress
         while True:
@@ -112,10 +113,7 @@ def main():
             # done recording; ready to transcribe speech
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
-                #filename = SoundReceiver.rawToWav()
-
-                speech_recognition_results = transcribe_audio(SoundReceiver.filename + ".wav")
-                #speech_recognition_results = transcribe_audio(filename)
+                speech_recognition_results = transcribe_audio('speak9.wav')
                 print(json.dumps(speech_recognition_results, indent=2))
                 user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
                 print("User Speech Text: " + user_speech_text + "\n")
@@ -127,11 +125,10 @@ def main():
                     get_nao_response(watson_text_response)
                     break
                 else:
-                    # start recording again
                     get_nao_response(watson_text_response)
-                    #SoundReceiver.start_recording() 
                     print "resuming"
-                    SoundReceiver.resume_recording()
+                    # start recording again
+                    SoundReceiver.resume_recording() 
     
     except KeyboardInterrupt:
         # closing

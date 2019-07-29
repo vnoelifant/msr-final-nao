@@ -9,6 +9,8 @@ import numpy as np
 import time
 import sys
 import os
+import audioop
+import math
 import wave
 from os.path import join, dirname
 import json
@@ -20,6 +22,7 @@ import naoqi
 from naoqi import ALModule, ALProxy, ALBroker
 import numpy as np
 import time
+import StringIO
 import sys
 import os
 import wave
@@ -52,7 +55,6 @@ right  microphone  /  3:  front  microphone  /  4:  rear  microphone.
 
 
 """
-
 class SoundReceiverModule(ALModule):
     """
     Custom Module to access the microphone data from Nao. Module inherited from Naoqi ALModule.
@@ -68,14 +70,15 @@ class SoundReceiverModule(ALModule):
         self.BIND_PYTHON(strModuleName,"processRemote")
         self.ALAudioDevice = ALProxy("ALAudioDevice", self.strNaoIp, 9559)
         self.audioBuffer = "" # initialize buffer to hold incoming data from Nao mic
+        self.recording = True
         self.wavfile = None
-        self.recording = False
-        self.paused = False
+        self.recording_in_progress = False
         self.silenceBuff = []
-        self.threshold = 1400 # threshold to detect speech
+        self.threshold = 700 # threshold to detect speech
         self.speech = []# initialize speech buffer to send for transcription
-        self.filename = '' # name of soeech data file
-        
+        self.avg = []
+        self.maximum = 16384 # frame length for volume average
+
 
     """
     module subscribe:
@@ -100,110 +103,134 @@ class SoundReceiverModule(ALModule):
     # subscribe to NAOQI Audio device and start recording 
     def start_recording(self): 
         self.recording = True
+        self.recording_in_progress = False
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         self.nSampleRate = 48000;
         self.CHUNK = 4096
-        self.SILENCE_LIMIT = 5 # seconds of silence duration
-        self.PREV_AUDIO = 0.5
+        self.SILENCE_LIMIT = 10 # seconds of silence duration
+        self.PREV_AUDIO = 4
         self.sub_chunk = self.nSampleRate/self.CHUNK 
+        # buffer for discarding silence
         self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
+        # buffer for adding silence to speech buffer to not miss the start of speech
+        self.prev_audio = deque(maxlen=self.PREV_AUDIO * self.sub_chunk) 
         self.ALAudioDevice.setClientPreferences(self.getName(), self.nSampleRate, nNbrChannelFlag, nDeinterleave); # setting same as default generate a bug !?!
         self.ALAudioDevice.subscribe(self.getName());
+        #self.num_silence = MAX_SILENCE
         print( "SoundReceiver: started!" )
 
     # resume recording from Naoqi
     def resume_recording(self):
-        self.recording = True
-        self.paused = False
         print( "SoundReceiver: resuming..." );
-    
-    # pause recording from Naoqi
-    def pause_and_transcribe(self,data): 
-        print( "SoundReceiver: pausing..." );
-        self.paused = True
-        #self.ALAudioDevice.unsubscribe(self.getName()) 
-        # convert list to np array
-        data = np.asarray(data, dtype=np.int16, order=None)
-        self.speech_to_file(data)
-        # set recording to stop
-        self.recording = False
-        # print "reset"
+        print "resetting"
+        self.recording = True
+        self.recording_in_progress = False
         self.reset()
+    # pause recording from Naoqi
+    def pause_and_transcribe(self): 
+        print( "SoundReceiver: pausing..." );
+        print "ready to transcribe, audio to wav"
+        self.rawToWav()
+        self.recording = False
 
-    def speech_to_file(self,data):
-        self.filename = 'output_'+str(int(time.time()))
-        outfile = open(self.filename + ".raw", "wb")
-        data.tofile(outfile)
-        outfile.close()
-        print "get to wav format"
-        self.rawToWav(self.filename)
-
-    def rawToWav(self,filename):
-        rawfile = filename + ".raw"
-        if not os.path.isfile(rawfile):
-            return
-
-        self.wavfile = wave.open(filename + ".wav", "wb")
-        self.wavfile.setframerate(48000)
+    def rawToWav(self):
+        #self.speech = pack('h',''.join(self.speech))
+        
+        #self.speech = np.asarray(self.speech, dtype=np.int16, order=None)
+        #self.speech = str(bytearray(self.speech))
+        self.avg = np.asarray(self.avg, dtype=np.int16, order=None)
+        self.avg = str(bytearray(self.avg))
+        #print self.avg, type(self.avg)
+        #filename = 'output_'+str(int(time.time()))
+        filename = "speak9"
+        #self.speech = ''.join(self.speech)
+        self.wavfile = wave.open(filename + '.wav', 'wb')
         self.wavfile.setnchannels(1)
         self.wavfile.setsampwidth(2)
+        self.wavfile.setframerate(48000)  
+        #self.wavfile.writeframes(self.speech)
+        self.wavfile.writeframes(self.avg)
+        self.wavfile.close()
+        return filename + '.wav'
+        # f = open(rawfile, "rb")
+        # sample = f.read(4096)
+        # print 'writing file: ' + filename + '.wav'
 
-        f = open(rawfile, "rb")
-        sample = f.read(4096)
-        print 'writing file: ' + filename + '.wav'
+        # while sample != "":
+        #     self.wavfile.writeframes(sample)
+        #     sample = f.read(4096)
+        # self.wavfile.close()
+        # return filename + '.wav'
+        
 
-        while sample != "":
-            outfile.writeframes(sample)
-            sample = f.read(4096)
-
-        return self.wavfile
- 
+  
+        
+    #self.recording_in_progress == False:
     """
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     """
     def processRemote(self, nbOfChannels, nbrOfSamplesByChannel, aTimeStamp, buffer):
-        if self.paused == False:
-
-            # This method receives the streaming microphone data. The buffer parameter contains an 
-            # array of bytes that was read from the microphone
-            # get sound data  
-            aSoundDataInterlaced = np.fromstring(str(buffer), dtype=np.int16);
-           
-            # reshape data
-            aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
-            # add sound data to buffer
-            self.audioBuffer = aSoundData[0]
-            #convert buffer to list
-            self.audioBuffer = self.audioBuffer.tolist()
+        # This method receives the streaming microphone data. The buffer parameter contains an 
+        # array of bytes that was read from the microphone
+        # get sound data  
+        aSoundDataInterlaced = np.fromstring(str(buffer), dtype=np.int16);
+        # reshape data
+        aSoundData = np.reshape(aSoundDataInterlaced,(nbOfChannels, nbrOfSamplesByChannel), 'F');
+        # add sound data to buffer
+        self.audioBuffer = aSoundData[0]
+        #convert buffer to list
+        self.audioBuffer = self.audioBuffer.tolist()
+        self.silenceBuff.extend(self.audioBuffer)
+        print "silence",self.silenceBuff, len(self.silenceBuff)
+        # set True for whether sound is detected 
+        sound_detected = self.is_sound_detected(self.silenceBuff)
+        # speech is detected
+        # TODO: Wrap this into a function
+        if sound_detected:
+            print "detected sound"
+            if not self.recording_in_progress:
+                print "Starting record of phrase"
+                self.recording_in_progress = True
+            self.speech.extend(self.audioBuffer)
+        elif self.recording_in_progress == True:
+            print "recording in progress, ready to transcribe"
+            self.speech.extend(list(self.prev_audio))
+            print "average the volume"
+            self.avg_volume()
+            print "pausing recording and getting ready to transcribe"
+            self.pause_and_transcribe()
             
-            self.silenceBuff.extend(self.audioBuffer)
-            # set boolean for whether speech is detected 
-            speech_detected = self.is_speech_detected(self.silenceBuff)
-            # speech is detected
-            if speech_detected:
-                # add audio over threshold value to speech buffer
-                self.speech.extend(self.audioBuffer)
-                # average out volume of sound data
-                self.avg_volume(self.speech)
-                # pausing recording and getting ready to transcribe
-                self.pause_and_transcribe(self.speech)
+          
+        else:
+            print "not over threshold"
+            self.prev_audio.extend(self.audioBuffer)
+            print "prev audio",len(self.prev_audio)
 
-
-    def is_speech_detected(self,data):
+    def is_sound_detected(self,data):
         "Returns 'True' if speech is detected"
         # True if at least one value of sound detected within silence window
         return (sum([sound > self.threshold for sound in data]) > 0)     
     
-    def avg_volume(self,data):
-        pass
+    def avg_volume(self):
+        print "average the volume"
+        times = float(self.maximum)/max(abs(sound) for sound in self.speech)
+
+        for sound in self.speech:
+            self.avg.append(int(sound*times))
    
     def reset(self):
-        # clear buffers
         self.speech = []
+        self.avg = []
+        self.audioBuffer = ""
+        nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
+        nDeinterleave = 0;
         self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
-      
-    
+        self.prev_audio = deque(maxlen=self.PREV_AUDIO * self.sub_chunk) 
+        self.ALAudioDevice.setClientPreferences(self.getName(), self.nSampleRate, nNbrChannelFlag, nDeinterleave); # setting same as default generate a bug !?!
+        self.ALAudioDevice.subscribe(self.getName());
+
+
 
     
  
