@@ -23,7 +23,7 @@ from os.path import join, dirname
 import json
 from naoqi import ALProxy
 from naoqi import ALBroker
-from nao_recorder_v2 import SoundReceiverModule
+from nao_recorder import SoundReceiverModule
 
 
 NAO_IP = "169.254.126.202" 
