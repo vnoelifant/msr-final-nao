@@ -9,6 +9,11 @@
 ###########################################################
 
 import os
+#from playsound import playsound
+from pydub import AudioSegment
+from pydub.playback import play
+
+
 import json
 from os.path import join, dirname
 from ibm_watson import SpeechToTextV1, AssistantV1
@@ -24,6 +29,7 @@ import json
 from naoqi import ALProxy
 from naoqi import ALBroker
 from nao_recorder import SoundReceiverModule
+import traceback
 
 
 NAO_IP = "169.254.126.202" 
@@ -58,9 +64,9 @@ def transcribe_audio(path_to_audio_file):
         return speech_to_text.recognize(
                 audio=audio_file,
                 content_type='audio/wav',
-                word_alternatives_threshold=0.9,
-                keywords=['hey', 'hi','watson','friend','meet'],
-                keywords_threshold=0.3
+                word_alternatives_threshold=0.5,
+                keywords=['hey there', 'hi','watson','friend','meet'],
+                keywords_threshold=0.5
             ).get_result()
 
 
@@ -105,7 +111,6 @@ def main():
     # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
-
     try:
         # waiting while recording in progress
         while True:
@@ -113,22 +118,34 @@ def main():
             # done recording; ready to transcribe speech
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
-                speech_recognition_results = transcribe_audio('speak9.wav')
-                print(json.dumps(speech_recognition_results, indent=2))
-                user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
-                print("User Speech Text: " + user_speech_text + "\n")
-                watson_text_response = get_watson_response(user_speech_text)
-                print("Watson Text Response",watson_text_response)
-                # trigger to end conversation
-                if watson_text_response == "Ok goodbye":
-                    print "stop conversation"
-                    get_nao_response(watson_text_response)
-                    break
-                else:
-                    get_nao_response(watson_text_response)
-                    print "resuming"
-                    # start recording again
-                    SoundReceiver.resume_recording() 
+                # test to check quality of .wav recording
+                speech = AudioSegment.from_wav("speak31.wav")
+                play(speech)
+                try:
+                    speech_recognition_results = transcribe_audio('speak31.wav')
+                    #speech_recognition_results = transcribe_audio(filename)
+                    print(json.dumps(speech_recognition_results, indent=2))
+                    user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
+                    print("User Speech Text: " + user_speech_text + "\n")
+                    watson_text_response = get_watson_response(user_speech_text)
+                    print("Watson Text Response",watson_text_response)
+                    # trigger to end conversation
+                    if watson_text_response == "Ok goodbye":
+                        print "stop conversation"
+                        get_nao_response(watson_text_response)
+                        break
+                    else:
+                        # start recording again
+                        get_nao_response(watson_text_response)
+                        print "resuming"
+                        SoundReceiver.resume_recording() 
+                except:
+                    traceback.print_exc()
+                    print "try speaking again"
+                    
+                print "resuming after traceback"
+                SoundReceiver.resume_recording() 
+            
     
     except KeyboardInterrupt:
         # closing

@@ -74,10 +74,11 @@ class SoundReceiverModule(ALModule):
         self.wavfile = None
         self.recording_in_progress = False
         self.silenceBuff = []
-        self.threshold = 700 # threshold to detect speech
+        self.threshold = 2000 # threshold to detect speech
         self.speech = []# initialize speech buffer to send for transcription
-        self.avg = []
+        self.avg = [] # averaged out speech buffer data
         self.maximum = 16384 # frame length for volume average
+        self.num_silence = 0
 
 
     """
@@ -102,22 +103,25 @@ class SoundReceiverModule(ALModule):
 `   """
     # subscribe to NAOQI Audio device and start recording 
     def start_recording(self): 
+        self.num_silence = 0
         self.recording = True
         self.recording_in_progress = False
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         self.nSampleRate = 48000;
         self.CHUNK = 4096
-        self.SILENCE_LIMIT = 10 # seconds of silence duration
-        self.PREV_AUDIO = 4
+        self.SILENCE_LIMIT = 500 
+        self.PADDING = 3
+        self.threshold = 2000
+        self.maximum = 16384
         self.sub_chunk = self.nSampleRate/self.CHUNK 
         # buffer for discarding silence
         self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
-        # buffer for adding silence to speech buffer to not miss the start of speech
-        self.prev_audio = deque(maxlen=self.PREV_AUDIO * self.sub_chunk) 
+        # buffer for prepending and adding silence to speech buffer to not miss the start and end
+        # of speech; avoids "chopped off" speech
+        self.padding = deque(maxlen=self.PADDING * self.sub_chunk) 
         self.ALAudioDevice.setClientPreferences(self.getName(), self.nSampleRate, nNbrChannelFlag, nDeinterleave); # setting same as default generate a bug !?!
         self.ALAudioDevice.subscribe(self.getName());
-        #self.num_silence = MAX_SILENCE
         print( "SoundReceiver: started!" )
 
     # resume recording from Naoqi
@@ -134,39 +138,20 @@ class SoundReceiverModule(ALModule):
         self.rawToWav()
         self.recording = False
 
+    # convert raw audio to wav file
     def rawToWav(self):
-        #self.speech = pack('h',''.join(self.speech))
-        
-        #self.speech = np.asarray(self.speech, dtype=np.int16, order=None)
-        #self.speech = str(bytearray(self.speech))
+        # get data formatted to convert to .wav audio file
         self.avg = np.asarray(self.avg, dtype=np.int16, order=None)
         self.avg = str(bytearray(self.avg))
-        #print self.avg, type(self.avg)
-        #filename = 'output_'+str(int(time.time()))
-        filename = "speak9"
-        #self.speech = ''.join(self.speech)
+        filename = "speak31"
         self.wavfile = wave.open(filename + '.wav', 'wb')
         self.wavfile.setnchannels(1)
         self.wavfile.setsampwidth(2)
         self.wavfile.setframerate(48000)  
-        #self.wavfile.writeframes(self.speech)
         self.wavfile.writeframes(self.avg)
         self.wavfile.close()
         return filename + '.wav'
-        # f = open(rawfile, "rb")
-        # sample = f.read(4096)
-        # print 'writing file: ' + filename + '.wav'
-
-        # while sample != "":
-        #     self.wavfile.writeframes(sample)
-        #     sample = f.read(4096)
-        # self.wavfile.close()
-        # return filename + '.wav'
-        
-
-  
-        
-    #self.recording_in_progress == False:
+   
     """
     This is the method that receives all the sound buffers from the "ALAudioDevice" module
     """
@@ -181,53 +166,69 @@ class SoundReceiverModule(ALModule):
         self.audioBuffer = aSoundData[0]
         #convert buffer to list
         self.audioBuffer = self.audioBuffer.tolist()
+        # throw away sound data below threshold value into a "silence" buffer
+        print "sound not over threshold"
         self.silenceBuff.extend(self.audioBuffer)
-        print "silence",self.silenceBuff, len(self.silenceBuff)
-        # set True for whether sound is detected 
+        # returns True for whether sound is detected 
         sound_detected = self.is_sound_detected(self.silenceBuff)
-        # speech is detected
-        # TODO: Wrap this into a function
+        # returns True for whether speech is detected
+        # detected speech is sound surrounded by silence: silence, sound, silence
+        speech_detected = self.is_speech_detected()
+
+        # add audio data to speech buffer if sound data over threshold
         if sound_detected:
             print "detected sound"
+            self.num_silence = 0
+            print self.num_silence
             if not self.recording_in_progress:
                 print "Starting record of phrase"
                 self.recording_in_progress = True
             self.speech.extend(self.audioBuffer)
-        elif self.recording_in_progress == True:
-            print "recording in progress, ready to transcribe"
-            self.speech.extend(list(self.prev_audio))
+            self.num_silence += 1
+
+        #speech is detected 
+        elif speech_detected:
+            print "we have detected speech, ready to transcribe"
+            self.speech = list(self.padding) + (self.speech)
+            self.speech.extend(list(self.padding))
             print "average the volume"
             self.avg_volume()
             print "pausing recording and getting ready to transcribe"
             self.pause_and_transcribe()
-            
-          
+
+        # add sound data to silence padding to be prepended and appended to 
+        # speech data
         else:
-            print "not over threshold"
-            self.prev_audio.extend(self.audioBuffer)
-            print "prev audio",len(self.prev_audio)
+            print "sound not over threshold and adding to silence padding buffer"
+            self.num_silence += 1
+            self.padding.extend(self.audioBuffer)
 
     def is_sound_detected(self,data):
-        "Returns 'True' if speech is detected"
+        "Returns 'True' if sound is detected"
         # True if at least one value of sound detected within silence window
         return (sum([sound > self.threshold for sound in data]) > 0)     
+
+    def is_speech_detected(self):
+        "Returns 'True' if speech is detected"
+        return  self.recording_in_progress == True and self.num_silence >= 30
     
     def avg_volume(self):
         print "average the volume"
-        times = float(self.maximum)/max(abs(sound) for sound in self.speech)
+        norm = float(self.maximum)/max(abs(sound) for sound in self.speech)
 
         for sound in self.speech:
-            self.avg.append(int(sound*times))
+            self.avg.append(int(sound*norm))
    
     def reset(self):
         self.speech = []
         self.avg = []
         self.audioBuffer = ""
+        self.num_silence = 0
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
-        self.prev_audio = deque(maxlen=self.PREV_AUDIO * self.sub_chunk) 
-        self.ALAudioDevice.setClientPreferences(self.getName(), self.nSampleRate, nNbrChannelFlag, nDeinterleave); # setting same as default generate a bug !?!
+        self.padding = deque(maxlen=self.PADDING * self.sub_chunk) 
+        self.ALAudioDevice.setClientPreferences(self.getName(), self.nSampleRate, nNbrChannelFlag, nDeinterleave); 
         self.ALAudioDevice.subscribe(self.getName());
 
 
