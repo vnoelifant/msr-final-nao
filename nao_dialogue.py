@@ -119,10 +119,10 @@ def main():
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
                 # test to check quality of .wav recording
-                speech = AudioSegment.from_wav("speak31.wav")
+                speech = AudioSegment.from_wav("speak32.wav")
                 play(speech)
                 try:
-                    speech_recognition_results = transcribe_audio('speak31.wav')
+                    speech_recognition_results = transcribe_audio('speak32.wav')
                     #speech_recognition_results = transcribe_audio(filename)
                     print(json.dumps(speech_recognition_results, indent=2))
                     user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 

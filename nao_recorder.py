@@ -74,7 +74,7 @@ class SoundReceiverModule(ALModule):
         self.wavfile = None
         self.recording_in_progress = False
         self.silenceBuff = []
-        self.threshold = 2000 # threshold to detect speech
+        self.threshold = 5000 # threshold to detect speech
         self.speech = []# initialize speech buffer to send for transcription
         self.avg = [] # averaged out speech buffer data
         self.maximum = 16384 # frame length for volume average
@@ -110,13 +110,12 @@ class SoundReceiverModule(ALModule):
         nDeinterleave = 0;
         self.nSampleRate = 48000;
         self.CHUNK = 4096
-        self.SILENCE_LIMIT = 500 
         self.PADDING = 3
-        self.threshold = 2000
+        self.threshold = 5000
         self.maximum = 16384
         self.sub_chunk = self.nSampleRate/self.CHUNK 
         # buffer for discarding silence
-        self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
+        self.silenceBuff = deque(maxlen=self.CHUNK)
         # buffer for prepending and adding silence to speech buffer to not miss the start and end
         # of speech; avoids "chopped off" speech
         self.padding = deque(maxlen=self.PADDING * self.sub_chunk) 
@@ -143,7 +142,7 @@ class SoundReceiverModule(ALModule):
         # get data formatted to convert to .wav audio file
         self.avg = np.asarray(self.avg, dtype=np.int16, order=None)
         self.avg = str(bytearray(self.avg))
-        filename = "speak31"
+        filename = "speak32"
         self.wavfile = wave.open(filename + '.wav', 'wb')
         self.wavfile.setnchannels(1)
         self.wavfile.setsampwidth(2)
@@ -167,7 +166,7 @@ class SoundReceiverModule(ALModule):
         #convert buffer to list
         self.audioBuffer = self.audioBuffer.tolist()
         # throw away sound data below threshold value into a "silence" buffer
-        print "sound not over threshold"
+        #print "sound not over threshold"
         self.silenceBuff.extend(self.audioBuffer)
         # returns True for whether sound is detected 
         sound_detected = self.is_sound_detected(self.silenceBuff)
@@ -179,7 +178,7 @@ class SoundReceiverModule(ALModule):
         if sound_detected:
             print "detected sound"
             self.num_silence = 0
-            print self.num_silence
+            #print self.num_silence
             if not self.recording_in_progress:
                 print "Starting record of phrase"
                 self.recording_in_progress = True
@@ -226,7 +225,7 @@ class SoundReceiverModule(ALModule):
         self.num_silence = 0
         nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
-        self.silenceBuff = deque(maxlen=self.SILENCE_LIMIT * self.sub_chunk)
+        self.silenceBuff = deque(maxlen=self.CHUNK)
         self.padding = deque(maxlen=self.PADDING * self.sub_chunk) 
         self.ALAudioDevice.setClientPreferences(self.getName(), self.nSampleRate, nNbrChannelFlag, nDeinterleave); 
         self.ALAudioDevice.subscribe(self.getName());
