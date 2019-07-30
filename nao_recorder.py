@@ -36,7 +36,7 @@ import logging
 import StringIO
 from collections import deque
 import sys
-from raw_to_wav import rawToWav
+
 
 
 # Reference: https://www.generationrobots.com/media/NAO%20Next%20Gen/FeaturePaper(AudioSignalProcessing)%20(1).pdf
