@@ -49,5 +49,89 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
 * [IBM Cloudant](https://www.ibm.com/cloud/cloudant): A fully managed, distributed JSON document database.
 
+* [Watson Speech To Text](https://www.google.com/search?ei=4oBIXZj2Dca4tQavgL24CQ&q=watson+speech+to+text+API&oq=watson+speech+to+text+API&gs_l=psy-ab.3..0l4j0i22i30l6.2150.2538..2781...0.0..0.89.319.4......0....1..gws-wiz.......0i71j0i67.vwnvoEZLDS0&ved=&uact=5): Transcribes speech from various languages and audio format.
+
+* Alternative Solution: [Natural Language Understanding](https://www.ibm.com/cloud/watson-natural-language-understanding): Analyze text to extract metadata from content such as concepts, entities, keywords, categories, sentiment, emotion, relations, and semantic roles using natural language understanding. 
+  * **Note** It seems this solution would provide more information from a speech utterance vs. just the Tone Analyzer. But not sure whether this vs. Tone integrated with Assistant would be a better choice. Also, can the intents and entities sent to be directly sent to Watson Studio machine learning model?
+
+## List of Intents and Entities
+
+|  **Tone Analyzer Tone** | **Intents** | **Entities** | **Entity Values** |
+| --- | --- | --- | --- |
+|  **sadness** | **emotion_sadness** |  |  |
+|   | job_loss |  |  |
+|   | breakup |  |  |
+|   | death | person | relative |
+|   |  |  | friend |
+|   |  |  | coworker |
+|   | self_loathing |  |  |
+|   | hurt_someone | person | relative |
+|   |  |  | friend |
+|   |  |  | coworker |
+|   | for_someone |  |  |
+|   | job_loss |  |  |
+|   | breakup |  |  |
+|   | death | person | relative |
+|   |  |  | friend |
+|   |  |  | coworker |
+|  **fear** | **emotion_fear** |  |  |
+|   | upcoming event | event | presentation |
+|   |  |  | performance |
+|   | thrilling_ride |  |  |
+|   | safety | person | me |
+|   |  |  | relative |
+|   |  |  | friend |
+|   |  |  | coworker |
+|   |  | situation | robbery |
+|   |  |  | blackmail |
+|   |  |  |  |
+|   |  |  |  |
+|  **joy** | **emotion_happy** |  |  |
+|   | job_event | event | promotion |
+|   |  |  | hired |
+|   | romance_event | event | anniversary |
+|   |  |  | marriage |
+|   |  |  | relationship |
+|   | family_event | birth | son |
+|   |  |  | daughter |
+|   |  |  | niece |
+|   |  |  | nephew |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|  **anger** | **emotion_anger** |  |  |
+|   | self_anger | mistake | job |
+|   |  |  | household |
+|   |  |  |  |
+|   |  |  |  |
+|   | external_anger | situation | hate_crime |
+|   |  |  | politics |
+|   |  |  |  |
+|   |  | person | boss |
+|   |  |  | spouse |
+|   |  |  |  |
+|  **tentative** | **emotion_tentative** |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|  **confident** | **emotion_confident** |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|   |  |  |  |
+|  **analytical** | **emotion_analytical** |  |  |
+
+
+## Example Dialogue Flow: Tone = Sadness:
+
+ ![](images/flow1.jpg)
+
+
+
+
 
 
