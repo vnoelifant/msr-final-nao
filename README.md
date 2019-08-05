@@ -18,7 +18,7 @@ This is the final project of the Northwestern MSR project. This project is an ex
 3. Python application sends the .wav file to Watson Speech to Text Service.
 4. Watson Speech to Text converts the speech to text.
 5. Watson Assistant analyzes makes a call to the Watson Tone Analyzer via IBM Cloud function
-6. Watson Tone Analyzer analyzes the tone and returns tone back to Watson Assistant via IBM Cloud Function. 
+6. Watson Tone Analyzer analyzes the tone and returns tone back to Watson Assistant via IBM Cloud Function. Note that here it is intented to have Nao light up his eyes based on emotion. 
 7. The tone is saved as a context variable and stored in the IBM Cloudant JSON database for tracking the flow of the dialogue. 
 8. Watson Assistant makes an additional function call to Watson Studio (Watson's Machine Learning/Data Science Platform) for retrieving conversational response. 
 9. Watson Studio trains Machine Learning Model coded in a Jupyter Notebook and using the dialogue training data stored in IBM Cloud Storage. 
