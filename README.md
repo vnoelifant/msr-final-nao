@@ -21,7 +21,7 @@ This is the final project of the Northwestern MSR project. This project is an ex
 6. Watson Tone Analyzer analyzes the tone and returns tone back to Watson Assistant via IBM Cloud Function. Note that here it is intented to have Nao light up his eyes based on emotion. 
 7. The tone is saved as a context variable and stored in the IBM Cloudant JSON database for tracking the flow of the dialogue. 
 8. Watson Assistant makes an additional function call to Watson Studio (Watson's Machine Learning/Data Science Platform) for retrieving conversational response. 
-9. Watson Studio trains Machine Learning Model coded in a Jupyter Notebook and using the dialogue training data stored in IBM Cloud Storage. 
+9. Watson Studio trains Machine Learning Model coded in a Jupyter Notebook and using the dialogue training data stored in IBM Cloud Storage. The Cloud storage also stores the trained model and training results.
 10. Watson Studio retrieves intelligent response generated via trained machine learning model. 
 11. Watson Studio sends back the response back to Watson Assistant via IBM Cloud Function. 
 12. The Watson Assistant API sends the textual response back to the client Python application.
@@ -35,13 +35,19 @@ This is the final project of the Northwestern MSR project. This project is an ex
   * [Nao-Robot Python-SDK](http://doc.aldebaran.com/2-1/dev/python/index.html): Allows devveloper to create Python modules that can run remotely or on the robot.
   * [Watson Developer Python-SDK](https://github.com/watson-developer-cloud/python-sdk): Client library to use the IBM Watson services in Python and available in pip as watson-developer-cloud
 
-* [Watson-Assistant-Service](https://cloud.ibm.com/apidocs/assistant): The IBM Watson™ Assistant service combines machine learning, natural language understanding, and integrated dialog tools to create conversation flows between your apps and your users.
+* [Watson Studio](https://cloud.ibm.com/cloud/watson-studio): IBM’s Watson Studio is a data science platform that provides all the tools necessary to develop a data-centric solution on the cloud. It makes use of Apache Spark clusters to provide the computational power needed to develop complex machine learning models. You can choose to create assets in Python, Scala, and R, and leverage open source frameworks (such as TensorFlow) that are already installed on Watson Studio. Watson Studio is used to deploy deep learning models and speeds up the process of training the model. It allows you to leverage the computational power available on the cloud to speed up the training time of the more complex machine learning models, and thus reducing the time from hours or days, down to minutes. 
 
-## Testing Flask with Watson. 
+* [Watson Assistant](https://cloud.ibm.com/apidocs/assistant): The IBM Watson™ Assistant service combines machine learning, natural language understanding, and integrated dialog tools to create conversation flows between your apps and your users.
 
- IBM's voice bot code pattern was used to test integration of Watson services in a web app built on top of JQuery and Python Flask. See demo below. 
+* Jupyter Notebooks: An open-source web application that allows you to create and share documents that contain live code, equations, visualizations and explanatory text.
 
- [![IMAGE ALT TEXT](http://img.youtube.com/vi/enxMyH2EoZw/0.jpg)](http://www.youtube.com/watch?v=enxMyH2EoZw "Flask Watson Testing")
+* [IBM Cloud Object Storage](https://www.ibm.com/cloud/object-storage?cm_mmc=Search_Google-_-Hybrid+Cloud_Cloud+Platform+Digital-_-WW_NA-_-ibm%20cloud%20storage_e&cm_mmca1=000016GC&cm_mmca2=10007090&cm_mmca7=9021485&cm_mmca8=kwd-358437825807&cm_mmca9=_k_EAIaIQobChMI96b1oJjr4wIVhJ6fCh0wYAm5EAAYASAAEgILTvD_BwE_k_&cm_mmca10=317209285678&cm_mmca11=e&gclid=EAIaIQobChMI96b1oJjr4wIVhJ6fCh0wYAm5EAAYASAAEgILTvD_BwE): A highly scalable cloud storage service, designed for high durability, resiliency and security.
+
+* [IBM Cloud Watson Machine Learning](https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/ml-overview.html): Create, train, and deploy self-learning models.
+
+* [IBM Watson Tone Analyzer](https://cloud.ibm.com/apidocs/tone-analyzer): Uses linguistic analysis to detect communication tones in written text.
+
+* [IBM Cloudant](https://www.ibm.com/cloud/cloudant): A fully managed, distributed JSON document database.
 
 
 

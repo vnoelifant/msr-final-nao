@@ -7,7 +7,14 @@
 
 This is a list of weekly goals as advised by Matthew Elwin, weekly accomplishments/issues noted by student researcher, and project meeting minutes. 
 
-## **Weekly Goals**:
+
+## Testing Flask with Watson: Pre-Summer Task. 
+
+ IBM's voice bot code pattern was used to test integration of Watson services in a web app built on top of JQuery and Python Flask. See demo below. 
+
+ [![IMAGE ALT TEXT](http://img.youtube.com/vi/enxMyH2EoZw/0.jpg)](http://www.youtube.com/watch?v=enxMyH2EoZw "Flask Watson Testing")
+
+## **Summer Weekly Goals**:
 
 * ## **Week 6/24/19 Goals**
   * **Items for Nao**
