@@ -14,11 +14,18 @@ This is the final project of the Northwestern MSR project. This project is an ex
  ## General Flow
 
 1. User speaks to NAO.
-2. A client python application connected to NAO converts the speech to text and sends the text to the Watson Assistant API. 
-3. The Watson Assistant API takes the text input, analyzed for intents (purposes of user inputs), and builds a dialogue that determines the responses NAO will give.
-4. The Watson Assistant API sends the textual responses back to the client Python application.
-5. The client Python application converts the text to speech.
-6. Nao speaks response to user. 
+2. A client python application extracts speech in form of a .wav file. 
+3. Python application sends the .wav file to Watson Speech to Text Service.
+4. Watson Speech to Text converts the speech to text.
+5. Watson Assistant analyzes makes a call to the Watson Tone Analyzer via IBM Cloud function
+6. Watson Tone Analyzer analyzes the tone and returns tone back to Watson Assistant via IBM Cloud Function. 
+7. The tone is saved as a context variable and stored in the IBM Cloudant JSON database for tracking the flow of the dialogue. 
+8. Watson Assistant makes an additional function call to Watson Studio to retrieve intelligent response generated via trained machine learning model. 
+9. Watson Studio sends back the response back to Watson Assistant via IBM Cloud Function. 
+10. The Watson Assistant API sends the textual response back to the client Python application.
+11. The client Python application converts the text to speech via Nao's Text to Speech function. 
+12. Nao speaks response to user. 
+**NOTE**: Conversation ends based on the state of the emotional tone (saved in the Cloudant DB). If For instance, a transition from a sad state to a happy state will trigger an end to the conversation. This is all managed in the dialogue nodes of Watson Assistant. The node flow is primarily driven by contextual variables representing emotional tone. Intents and Entities will be managed via Python Neural Network code in the Jupyter Notebook. 
 
 ## Included components
 
