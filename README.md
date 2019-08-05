@@ -7,9 +7,13 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
  Click [here](./PROGRESS.MD) to view project goals and progress. 
 
- ## NAO-Watson Framework (IN WORK)
+ ## NAO-Watson Framework (v1)
 
  ![](images/NAO_Watson_Architecture.png)
+
+ ## NAO-Watson Framework (v2)
+
+ ![](images/NAO_Watson_Architecture_v2.png)
 
  ## General Flow
 
