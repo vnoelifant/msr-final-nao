@@ -23,11 +23,10 @@ This is the final project of the Northwestern MSR project. This project is an ex
 8. Watson Assistant makes an additional function call to Watson Studio (Watson's Machine Learning/Data Science Platform). 
 9. Watson Studio runs Machine Learning Model coded in a Jupyter Notebook and using the dialogue training data stored in IBM Cloud Storage. 
 10. Watson Studio retrieves intelligent response generated via trained machine learning model. 
-11. 
-12. Watson Studio sends back the response back to Watson Assistant via IBM Cloud Function. 
-13. The Watson Assistant API sends the textual response back to the client Python application.
-14. The client Python application converts the text to speech via Nao's Text to Speech function. 
-15. Nao speaks response to user. 
+11. Watson Studio sends back the response back to Watson Assistant via IBM Cloud Function. 
+12. The Watson Assistant API sends the textual response back to the client Python application.
+13. The client Python application converts the text to speech via Nao's Text to Speech function. 
+14. Nao speaks response to user. 
   * **NOTE**: Conversation ends based on the state of the emotional tone (saved in the Cloudant DB). If For instance, a transition from a sad state to a happy state will trigger an end to the conversation. This is all managed in the dialogue nodes of Watson Assistant. The node flow is primarily driven by contextual variables representing emotional tone. Intents and Entities will be managed via Python Neural Network code in the Jupyter Notebook. 
 
 ## Included components
