@@ -39,7 +39,7 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
 * [Watson Assistant](https://cloud.ibm.com/apidocs/assistant): The IBM Watson™ Assistant service combines machine learning, natural language understanding, and integrated dialog tools to create conversation flows between your apps and your users.
 
-* Jupyter Notebooks: An open-source web application that allows you to create and share documents that contain live code, equations, visualizations and explanatory text.
+* [Jupyter Notebooks](https://jupyter.org/): An open-source web application that allows you to create and share documents that contain live code, equations, visualizations and explanatory text.
 
 * [IBM Cloud Object Storage](https://www.ibm.com/cloud/object-storage?cm_mmc=Search_Google-_-Hybrid+Cloud_Cloud+Platform+Digital-_-WW_NA-_-ibm%20cloud%20storage_e&cm_mmca1=000016GC&cm_mmca2=10007090&cm_mmca7=9021485&cm_mmca8=kwd-358437825807&cm_mmca9=_k_EAIaIQobChMI96b1oJjr4wIVhJ6fCh0wYAm5EAAYASAAEgILTvD_BwE_k_&cm_mmca10=317209285678&cm_mmca11=e&gclid=EAIaIQobChMI96b1oJjr4wIVhJ6fCh0wYAm5EAAYASAAEgILTvD_BwE): A highly scalable cloud storage service, designed for high durability, resiliency and security.
 
