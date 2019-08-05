@@ -27,7 +27,7 @@ This is the final project of the Northwestern MSR project. This project is an ex
 12. The Watson Assistant API sends the textual response back to the client Python application.
 13. The client Python application converts the text to speech via Nao's Text to Speech function. 
 14. Nao speaks response to user. 
-  * **NOTE**: Conversation ends based on the state of the emotional tone (saved in the Cloudant DB). If For instance, a transition from a sad state to a happy state will trigger an end to the conversation. This is all managed in the dialogue nodes of Watson Assistant. The node flow is primarily driven by contextual variables representing emotional tone. Intents and Entities will be managed via Python Neural Network code in the Jupyter Notebook. 
+  * **NOTE**: Conversation transitions and endings are based on the state of the emotional tone (saved in the Cloudant DB). If For instance, a transition from a sad state to a happy state will trigger an end to the conversation. This is all managed in the dialogue nodes of Watson Assistant. The node flow is primarily driven by contextual variables representing emotional tone. Intents and Entities will be managed via Python Neural Network code in the Jupyter Notebook. 
 
 ## Included components
 
