@@ -20,8 +20,8 @@ This is the final project of the Northwestern MSR project. This project is an ex
 5. Watson Assistant analyzes makes a call to the Watson Tone Analyzer via IBM Cloud function
 6. Watson Tone Analyzer analyzes the tone and returns tone back to Watson Assistant via IBM Cloud Function. 
 7. The tone is saved as a context variable and stored in the IBM Cloudant JSON database for tracking the flow of the dialogue. 
-8. Watson Assistant makes an additional function call to Watson Studio (Watson's Machine Learning/Data Science Platform). 
-9. Watson Studio runs Machine Learning Model coded in a Jupyter Notebook and using the dialogue training data stored in IBM Cloud Storage. 
+8. Watson Assistant makes an additional function call to Watson Studio (Watson's Machine Learning/Data Science Platform) for retrieving conversational response. 
+9. Watson Studio trains Machine Learning Model coded in a Jupyter Notebook and using the dialogue training data stored in IBM Cloud Storage. 
 10. Watson Studio retrieves intelligent response generated via trained machine learning model. 
 11. Watson Studio sends back the response back to Watson Assistant via IBM Cloud Function. 
 12. The Watson Assistant API sends the textual response back to the client Python application.
