@@ -184,12 +184,22 @@ catch index error and print results. Write pseudocode in functions first. Fill i
 
   * ### **Meeting Agenda**:
     * #### Accomplishments
-      * Designed a couple of new frameworks on AI design and discussed with Matt
-        * Discussed challenges (hard to find a Watson service to deliver intelligent responses), suggestions (try not to use Watson Studio, look into potential feasibility of RASA dialogue framework, modifying dialogue training data to include emotion label. 
+      * Designed a couple of new frameworks on AI design, list of planned intents/entities, and a simple dialogue flowchart, and discussed with Matt
+        * Discussed following: 
+          * challenges: 
+            * hard to find a Watson service to deliver intelligent responses
+            * suggestions: 
+              * try not to use Watson Studio
+              * look into potential feasibility of RASA dialogue framework
+              * modifying dialogue training data to include emotion label
+              * test out tone detection on NAO without using Watson Assistant before working on the intelligent dialogue portion
       * Coded tone detection for simple sad emotion dialogue scenario per flowchart
+        * Tested with success on Nao. See demo below!
+
+        [![IMAGE ALT TEXT](http://img.youtube.com/vi/3_psNvxDgfc/0.jpg)](http://www.youtube.com/watch?v=3_psNvxDgfc "Nao Detects Silence")
 
     * #### Issues
-      * None
+      * Watson Natural Language Understanding seems to only take long text input vs Tone Analyzer. For instance "I am sad" on NLU yielded a response error message requesting more text input
     * #### TODO
       * AI portion of project
         * Look into capabilities of RASA Python dialogue framework

@@ -13,7 +13,7 @@ from pydub import AudioSegment
 from pydub.playback import play
 import json
 from os.path import join, dirname
-from ibm_watson import SpeechToTextV1, AssistantV1,NaturalLanguageUnderstandingV1
+from ibm_watson import SpeechToTextV1, AssistantV1,NaturalLanguageUnderstandingV1,ToneAnalyzerV3
 from ibm_watson.natural_language_understanding_v1 \
     import Features, EntitiesOptions, KeywordsOptions
 from optparse import OptionParser
@@ -32,6 +32,8 @@ import traceback
 
 
 NAO_IP = "169.254.126.202" 
+
+TOP_EMOTION_SCORE_THRESHOLD = 0.5
 
 def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
@@ -181,8 +183,7 @@ def main():
                         get_nao_response(nao_response)
                         print "stop conversation"
                         break
-                    
-                    print("Nao response: " + nao_response + "\n")  
+
                     # get watson text response from Watson Assistant
                     #watson_text_response = get_watson_response(user_speech_text)
                     #print("Watson Text Response",watson_text_response)
@@ -195,8 +196,13 @@ def main():
                     else:
                         #start recording again
                         #get_nao_response(watson_text_response)
-                        print "resuming"
+                                       
+                        nao_response = "Hmm. I couldn't catch your tone. Try telling me what's going on again."
+                        get_nao_response(nao_response)
+                        print "resuming"  
                         SoundReceiver.resume_recording() 
+                    print("Nao response: " + nao_response + "\n")  
+                
                 except:
                     traceback.print_exc()
                     print "try speaking again"
