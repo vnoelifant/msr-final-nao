@@ -193,7 +193,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
               * look into potential feasibility of RASA dialogue framework
               * modifying dialogue training data to include emotion label
               * test out tone detection on NAO without using Watson Assistant before working on the intelligent dialogue portion
-      * Coded tone detection for simple sad emotion dialogue scenario per flowchart
+      * Coded tone detection for simple sad emotion dialogue scenario per flowchart (death scenario). 
         * Tested with success on Nao. See demo below!
 
         [![IMAGE ALT TEXT](http://img.youtube.com/vi/3_psNvxDgfc/0.jpg)](http://www.youtube.com/watch?v=3_psNvxDgfc "Nao Detects Silence")
@@ -201,6 +201,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
     * #### Issues
       * Watson Natural Language Understanding seems to only take long text input vs Tone Analyzer. For instance "I am sad" on NLU yielded a response error message requesting more text input
     * #### TODO
+      * Add code to account for option of different "sad" scenarios per flowchart. 
       * AI portion of project
         * Look into capabilities of RASA Python dialogue framework
   
