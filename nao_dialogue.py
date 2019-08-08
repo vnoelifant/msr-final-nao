@@ -102,7 +102,7 @@ def get_top_emo(user_speech_text):
         return top_emotion
 
 # list of responses from nao from sad tone input
-def emo_gen():
+def sad_emo_gen():
     yield "why are you sad?"
     yield "oh no I am sorry, who passed?"
     yield "Very sorry and sad for you. I am sure he is in your heart."
@@ -150,7 +150,7 @@ def main():
     SoundReceiver.start_recording() 
 
     try:
-        nao_response = emo_gen()
+        sad_nao_response = sad_emo_gen()
         # waiting while recording in progress
         while True:
             time.sleep(1)
@@ -171,7 +171,6 @@ def main():
                     
                     # Nao responds to scripted sad scenario
                     if top_emotion == "sadness"or top_emotion == "fear":
-                        sad_nao_response = sad_emo_gen()
                         nao_response = next(sad_nao_response)
                         get_nao_response(nao_response)
                     elif top_emotion == "confidence" or top_emotion == "analytical":
