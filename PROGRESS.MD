@@ -185,6 +185,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
   * ### **Meeting Agenda**:
     * #### Accomplishments
       * Designed a couple of new frameworks on AI design and discussed with Matt
+        * Discussed challenges (hard to find a Watson service to deliver intelligent responses), suggestions (try not to use Watson Studio, look into potential feasibility of RASA dialogue framework, modifying dialogue training data to include emotion label. 
       * Coded tone detection for simple sad emotion dialogue scenario per flowchart
 
     * #### Issues
