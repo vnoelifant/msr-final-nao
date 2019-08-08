@@ -9,14 +9,13 @@
 ###########################################################
 
 import os
-#from playsound import playsound
 from pydub import AudioSegment
 from pydub.playback import play
-
-
 import json
 from os.path import join, dirname
-from ibm_watson import SpeechToTextV1, AssistantV1
+from ibm_watson import SpeechToTextV1, AssistantV1,NaturalLanguageUnderstandingV1
+from ibm_watson.natural_language_understanding_v1 \
+    import Features, EntitiesOptions, KeywordsOptions
 from optparse import OptionParser
 import naoqi
 import numpy as np
@@ -34,9 +33,9 @@ import traceback
 
 NAO_IP = "169.254.126.202" 
 
-def get_nao_response(watson_text):
+def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
-    tts.say(watson_text)
+    tts.say(nao_text)
 
 def get_watson_response(user_speech_text):
     # initialize the Watson Assistant
@@ -54,6 +53,7 @@ def get_watson_response(user_speech_text):
     watson_text_response = '{}'.format(watson_text_response)
     return watson_text_response
 
+
 def transcribe_audio(path_to_audio_file):
     # initialize speech to text service
     speech_to_text = SpeechToTextV1(
@@ -69,6 +69,44 @@ def transcribe_audio(path_to_audio_file):
                 keywords_threshold=0.5
             ).get_result()
 
+def get_top_emo(user_speech_text):
+
+    tone_analyzer = ToneAnalyzerV3(
+        version='2017-09-21',
+        iam_apikey='lcyNkGVUvRAKH98-K-pQwlUT0oG24TyY9OYUBXXIvaTk',
+        url='https://gateway.watsonplatform.net/tone-analyzer/api'
+    )
+
+    text = user_speech_text
+
+    tone_analysis = tone_analyzer.tone(
+        {'text': text},
+        content_type='application/json'
+    ).get_result()
+    print(json.dumps(tone_analysis, indent=2))
+
+    max_score = 0.0
+    top_emotion = None
+    top_emo_score = None
+    tone_dict = tone_analysis['document_tone']['tones']
+    for tone in tone_dict:
+        if tone['score'] > max_score:
+            max_score = tone['score']
+            top_emotion = tone['tone_name'].lower()
+            top_emo_score = tone['score']
+
+        if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
+            top_emotion = 'neutral'
+            top_emo_score = None
+        print top_emotion, top_emo_score
+        return top_emotion
+
+# list of responses from nao from sad tone input
+def emo_gen():
+    yield "why are you sad?"
+    yield "oh no I am sorry, who passed?"
+    yield "Very sorry and sad for you. I am sure he is in your heart."
+    yield "Im here if you need anything"
 
 def main():
     """ Main entry point
@@ -112,6 +150,7 @@ def main():
     SoundReceiver.start_recording() 
 
     try:
+        nao_response = emo_gen()
         # waiting while recording in progress
         while True:
             time.sleep(1)
@@ -123,20 +162,37 @@ def main():
                 play(speech)
                 try:
                     speech_recognition_results = transcribe_audio('speak32.wav')
-                    #speech_recognition_results = transcribe_audio(filename)
                     print(json.dumps(speech_recognition_results, indent=2))
                     user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
                     print("User Speech Text: " + user_speech_text + "\n")
-                    watson_text_response = get_watson_response(user_speech_text)
-                    print("Watson Text Response",watson_text_response)
-                    # trigger to end conversation
-                    if watson_text_response == "Ok goodbye":
+
+                    # get top tone from Tone Analyzer
+                    top_emotion = get_top_emo(user_speech_text)
+                    
+                    # Nao responds to scripted sad scenario
+                    if top_emotion == "sadness"or top_emotion == "fear":
+                        nao_response = emo_gen()
+                        get_nao_response(next(nao_response))
+                    elif top_emotion == "confidence" or top_emotion == "analytical":
+                        nao_response =  "I bet it was. I am here if you need anything."
+                    elif top_emotion == "joy":
+                        nao_response = "anytime sweet Ronnie"
+                        print("Nao response: " + nao_response + "\n")
                         print "stop conversation"
-                        get_nao_response(watson_text_response)
                         break
+                        
+                    # get watson text response from Watson Assistant
+                    #watson_text_response = get_watson_response(user_speech_text)
+                    #print("Watson Text Response",watson_text_response)
+                    # trigger to end conversation
+                    #if watson_text_response == "Ok goodbye":
+                    #    print "stop conversation"
+                    #    get_nao_response(watson_text_response)
+                    #    break
+                    
                     else:
-                        # start recording again
-                        get_nao_response(watson_text_response)
+                        #start recording again
+                        #get_nao_response(watson_text_response)
                         print "resuming"
                         SoundReceiver.resume_recording() 
                 except:
