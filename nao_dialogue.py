@@ -171,16 +171,19 @@ def main():
                     
                     # Nao responds to scripted sad scenario
                     if top_emotion == "sadness"or top_emotion == "fear":
-                        nao_response = emo_gen()
-                        get_nao_response(next(nao_response))
+                        sad_nao_response = sad_emo_gen()
+                        nao_response = next(sad_nao_response)
+                        get_nao_response(nao_response)
                     elif top_emotion == "confidence" or top_emotion == "analytical":
                         nao_response =  "I bet it was. I am here if you need anything."
+                        get_nao_response(nao_response)
                     elif top_emotion == "joy":
                         nao_response = "anytime sweet Ronnie"
-                        print("Nao response: " + nao_response + "\n")
+                        get_nao_response(nao_response)
                         print "stop conversation"
                         break
-                        
+                    
+                    print("Nao response: " + nao_response + "\n")  
                     # get watson text response from Watson Assistant
                     #watson_text_response = get_watson_response(user_speech_text)
                     #print("Watson Text Response",watson_text_response)
