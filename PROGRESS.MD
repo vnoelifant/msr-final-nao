@@ -106,7 +106,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
     * #### Accomplishments
       * Major code updates that integrates the developed pseudocode. Updates include:
         * Silence detection
-        * Peak sound detection
+       * Peak sound detection
         * Pause recording flag and pause/resume recording functions
         * Averaging out volume of sound
         * Re-initializing audio buffer (in memory file) when resuming recording
@@ -130,4 +130,72 @@ catch index error and print results. Write pseudocode in functions first. Fill i
         * may need to get different data and different sentences
       
   * ### **7/25/19 Meeting Minutes**:
+    * Try to keep data as an array
+    * Run tests to hear/play the .wav file
+
+* ## **Week 7/29/19 Goals**
+  * Implement speech_detect() such that you reliably have the following working:
+    * 1. You speak to Nao
+    * 2. You capture the speech. (This is where you need speech_detect() to determine when to pauseRecording(), create the .wav file, and have watson process the audio.)
+    * 3. Watson transcribes the speech
+    * 4. Nao speaks a response
+    * 5. Goto step 1.
+
+  * Start designing the dialog logic and start incorporating more watson api calls into the main loop. This includes 2 pieces: 
+    * 1. Specifying the desired behavior, based on the capabilities of the watson api:
+      * What are the intents you want to define?
+      * What emotions do you want to detect?
+      * How do you want the dialog to fit together?
+        * Recommendation:  drawing a rough flow chart for this (doesn't need to be pretty but should show the interactions of the different pieces).  
+
+    * 2. Start coding the behavior that you specified
+      * One simple suggestion for a first step: 
+        * Define an intent for "stop talking" and use this intent, rather than exact phrase matching, to exit the program.
+
+  * ### **Meeting Agenda**:
+    * #### Accomplishments
+      * Updates to code to make the speech detection more reliable. Used deques, for instance a silence buffer that throws away silent data, and a speech buffer to hold speech surrounded by silence. Silence was detected based on a counter. 
+
+    * #### Issues
+      * None
+    * #### TODO
+      * AI portion of project
+  
+  * ### **7/29/19 Meeting Minutes**:
+    * may need to tweak the sound threshold to make more rpbust. Ex: adding in a percentage. But this is not urgent. 
+    * Check if any background items are running on Nao, to ensure Nao is only running my sound. 
+    * AI and Watson Research: 
+      * 1. what is AI going to do in phrasing?
+
+        * 1a. What behavior do I want?
+
+        * 2. how to structure code to achieve behavior. Main loop. Synchornous watson API. Transcribe text, now what do we do?
+
+        * 3. implement the code. Continue pseudocode
+
+        * 4. getting tone detection
+
+      * Send by email the flow chart
+
+
+* ## **Week 8/5/19 Goals**
+  * Flowchart on the AI design of project
+  * Per Matt comments on meeting 8/5/19: Get tone detection dialogue scenario from flow chart working. 
+
+  * ### **Meeting Agenda**:
+    * #### Accomplishments
+      * Designed a couple of new frameworks on AI design and discussed with Matt
+      * Coded tone detection for simple sad emotion dialogue scenario per flowchart
+
+    * #### Issues
+      * None
+    * #### TODO
+      * AI portion of project
+        * Look into capabilities of RASA Python dialogue framework
+  
+  * ### **8/8/19 Meeting Minutes**:
     * 
+
+
+
+
