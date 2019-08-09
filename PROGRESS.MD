@@ -184,7 +184,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
 
   * ### **Meeting Agenda**:
     * #### Accomplishments
-      * Designed a couple of new frameworks on AI design, list of planned intents/entities, and a simple dialogue flowchart, and discussed with Matt
+      * Designed a couple of new frameworks on AI design, list of planned intents/entities, and a simple dialogue flowchart, and discussed with Matt on 8/5/19
         * Discussed following: 
           * challenges: 
             * hard to find a Watson service to deliver intelligent responses
@@ -206,7 +206,32 @@ catch index error and print results. Write pseudocode in functions first. Fill i
         * Look into capabilities of RASA Python dialogue framework
   
   * ### **8/8/19 Meeting Minutes**:
-    * 
+    * Summarized 8/5/19 discussion with Ola regarding next steps
+    * Demoed tone detection on Nao (simple death scenario)
+    * Feedback:
+      * Think of long term goal
+        * What do we really want Nao to be capable of besides just having a conversation?
+          * Ex. 
+            * Detect someon'es tone within 5 sentences
+              * Nao starting with "What did you do today?"
+          * Film or Sports Buddy
+        * Per response, increase confidence of tone
+        * Add intents
+        * During each stage of convo, anayze tone and intents
+    * Drew up example diaglogue flow with Matt
+      * Began with a film buddy 
+        * Determined it would be best to start with something more simple
+      * Went with the "What did you do today" initial branch. 
+      * Focus on intents and Nao not asking for feelings
+        * Ex. "How was work?"
+
+* ## **Week 8/5/19 Goals**
+  * The immediate goal is to be able to discern emotion without directly asking about it.
+  * The plan is to create a dialog tree based on intents.
+    * The responses are also passed to the tone detector and analyzed for tone
+    * A cumulative tone score is kept on each successive dialog level in the tree
+    * After a few question, the AI should guess at the person's tone.
+    * You should create a dialog tree explaining how you wish the dialog should go and then implement it in code. This is similar to what was done on the board during 8/8/19 meeting except that each possible branch should be labeled with an intent and/or a tone score that causes that branch to be taken 
 
 
 
