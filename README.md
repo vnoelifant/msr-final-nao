@@ -15,7 +15,7 @@ This is the final project of the Northwestern MSR project. This project is an ex
 
  ![](images/NAO_Watson_Architecture_v2.png)
 
- ## General Flow (v1)
+ ## General Flow (v1) (IN WORK)
 
 1. User speaks to NAO.
 2. A client python application extracts speech in form of a .wav file. 
@@ -62,7 +62,11 @@ This is the final project of the Northwestern MSR project. This project is an ex
 * Alternative Solution: [Natural Language Understanding](https://www.ibm.com/cloud/watson-natural-language-understanding): Analyze text to extract metadata from content such as concepts, entities, keywords, categories, sentiment, emotion, relations, and semantic roles using natural language understanding. 
   * **Note** It seems this solution would provide more information from a speech utterance vs. just the Tone Analyzer. But not sure whether this vs. Tone integrated with Assistant would be a better choice. Also, can the intents and entities sent to be directly sent to Watson Studio machine learning model?
 
-## List of Intents and Entities
+## Dialogue Flow (IN WORK)
+![](images/nao_dialogue.png)
+
+
+## List of Intents and Entities (IN WORK)
 
 |  **Tone Analyzer Tone** | **Intents** | **Entities** | **Entity Values** |
 | --- | --- | --- | --- |
