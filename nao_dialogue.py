@@ -35,6 +35,28 @@ NAO_IP = "169.254.126.202"
 
 TOP_EMOTION_SCORE_THRESHOLD = 0.5
 
+# TODO:Move Watson Assistant call here
+
+# create Watson Assistant workspace data
+def create_workspace():  
+    # call create_workspace SDK method via assistant.create_workspace 
+    # create intents, user examples, entities in JSON form
+
+# create Watson Assistant dialogue nodes
+def create_dialogue():
+    # call create_dialogue_node/update_dialog_node SDK methods
+    # build up dialogue tree in JSON form
+    # add intents to nodes as necessary
+
+# create Watson Assistant dialogue loguc
+def start_emo_convo():
+    # call the Watson Tone analyzer service
+    # get the current tone from tone analyzer service
+    # add the current tone and tone score to Watson Assistant context variable
+    # append tone and tone score to dictionary to maintain tone history
+    # get Watson Text response via Watson Assistant
+    # convert watson Text response to Nao Speech
+
 def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
     tts.say(nao_text)
@@ -103,13 +125,6 @@ def get_top_emo(user_speech_text):
         print top_emotion, top_emo_score
         return top_emotion
 
-# list of responses from nao from sad tone input
-def sad_emo_gen():
-    yield "why are you sad?"
-    yield "oh no I am sorry, who passed?"
-    yield "Very sorry and sad for you. I am sure he is in your heart."
-    yield "Im here if you need anything"
-
 def main():
     """ Main entry point
 
@@ -168,21 +183,9 @@ def main():
                     user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
                     print("User Speech Text: " + user_speech_text + "\n")
 
-                    # get top tone from Tone Analyzer
-                    top_emotion = get_top_emo(user_speech_text)
-                    
-                    # Nao responds to scripted sad scenario
-                    if top_emotion == "sadness"or top_emotion == "fear":
-                        nao_response = next(sad_nao_response)
-                        get_nao_response(nao_response)
-                    elif top_emotion == "confidence" or top_emotion == "analytical":
-                        nao_response =  "I bet it was. I am here if you need anything."
-                        get_nao_response(nao_response)
-                    elif top_emotion == "joy":
-                        nao_response = "anytime sweet Ronnie"
-                        get_nao_response(nao_response)
-                        print "stop conversation"
-                        break
+                    # send user_speech_text to Watson Assistant to be analyzed for intents and tone
+                    start_emo_convo()
+                 
 
                     # get watson text response from Watson Assistant
                     #watson_text_response = get_watson_response(user_speech_text)
