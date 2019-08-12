@@ -37,25 +37,32 @@ TOP_EMOTION_SCORE_THRESHOLD = 0.5
 
 # TODO:Move Watson Assistant call here
 
-# create Watson Assistant workspace data
-def create_workspace():  
-    # call create_workspace SDK method via assistant.create_workspace 
-    # create intents, user examples, entities in JSON form
+# are intents and entities global to workspace?
 
-# create Watson Assistant dialogue nodes
-def create_dialogue():
-    # call create_dialogue_node/update_dialog_node SDK methods
-    # build up dialogue tree in JSON form
-    # add intents to nodes as necessary
+# to retrieve intents, user examples, entities from Watson Assistant
+workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
 # create Watson Assistant dialogue loguc
-def start_emo_convo():
+def start_emo_convo(user_input_text):
     # call the Watson Tone analyzer service
     # get the current tone from tone analyzer service
-    # add the current tone and tone score to Watson Assistant context variable
     # append tone and tone score to dictionary to maintain tone history
-    # get Watson Text response via Watson Assistant
-    # convert watson Text response to Nao Speech
+    # get Nao response according to tone and intent conditions
+    response = assistant.get_workspace(
+    workspace_id=workspace_id, export=True).get_result()
+    print(json.dumps(response, indent=2))
+    print "intent",response['intents'][0]['intent']
+
+    tone = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
+    detected_emotion = get_top_emo(user_input_text, tone)
+    print "detected_emotion", detected_emotion
+    
+    # user states they went to work for the day
+    if response['intents'][0]['intent']== "work" and \
+        detected_emotion !='sadness':
+        #print "Ok, you are not sad"
+        nao_response = "I see. Did anything interesting happen there?"
+        get_nao_response(nao_response)
 
 def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
@@ -93,22 +100,7 @@ def transcribe_audio(path_to_audio_file):
                 keywords_threshold=0.5
             ).get_result()
 
-def get_top_emo(user_speech_text):
-
-    tone_analyzer = ToneAnalyzerV3(
-        version='2017-09-21',
-        iam_apikey='lcyNkGVUvRAKH98-K-pQwlUT0oG24TyY9OYUBXXIvaTk',
-        url='https://gateway.watsonplatform.net/tone-analyzer/api'
-    )
-
-    text = user_speech_text
-
-    tone_analysis = tone_analyzer.tone(
-        {'text': text},
-        content_type='application/json'
-    ).get_result()
-    print(json.dumps(tone_analysis, indent=2))
-
+def get_top_emo(user_speech_text,tone):
     max_score = 0.0
     top_emotion = None
     top_emo_score = None
@@ -123,7 +115,7 @@ def get_top_emo(user_speech_text):
             top_emotion = 'neutral'
             top_emo_score = None
         print top_emotion, top_emo_score
-        return top_emotion
+    return top_emotion
 
 def main():
     """ Main entry point
@@ -161,13 +153,18 @@ def main():
     global SoundReceiver
     SoundReceiver = SoundReceiverModule("SoundReceiver", pip)
 
+
+    # Nao wants to know what you did today
+    nao_response = "Hello, what did you do today?"
+    get_nao_response(nao_response)
+    
     print("Please say something into NAO's microphone\n")
     
     # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
     try:
-        sad_nao_response = sad_emo_gen()
+        #sad_nao_response = sad_emo_gen()
         # waiting while recording in progress
         while True:
             time.sleep(1)
@@ -184,7 +181,7 @@ def main():
                     print("User Speech Text: " + user_speech_text + "\n")
 
                     # send user_speech_text to Watson Assistant to be analyzed for intents and tone
-                    start_emo_convo()
+                    start_emo_convo(user_speech_text)
                  
 
                     # get watson text response from Watson Assistant
