@@ -35,9 +35,12 @@ NAO_IP = "169.254.126.202"
 
 TOP_EMOTION_SCORE_THRESHOLD = 0.5
 
-# TODO:Move Watson Assistant call here
-
-# are intents and entities global to workspace?
+# initialize Watson Assistant service
+assistant = AssistantV1(
+    version='2019-02-28',
+    iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
+    url='https://gateway.watsonplatform.net/assistant/api'
+)
 
 # to retrieve intents, user examples, entities from Watson Assistant
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
@@ -68,22 +71,21 @@ def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
     tts.say(nao_text)
 
-def get_watson_response(user_speech_text):
-    # initialize the Watson Assistant
-    assistant = AssistantV1(
-        version='2019-02-28',
-        iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
-        url='https://gateway.watsonplatform.net/assistant/api'
-    )
+# def get_watson_response(user_speech_text):
+#     # initialize the Watson Assistant
+#     assistant = AssistantV1(
+#         version='2019-02-28',
+#         iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
+#         url='https://gateway.watsonplatform.net/assistant/api'
+#     )
 
-    response = assistant.message(
-    workspace_id='5db84ece-e19e-4914-9993-ab7206b50a5c',
-    input={'text': user_speech_text}).get_result()
-    print(json.dumps(response, indent=2))
-    watson_text_response = response['output']['text'][0]
-    watson_text_response = '{}'.format(watson_text_response)
-    return watson_text_response
-
+#     response = assistant.message(
+#     workspace_id='5db84ece-e19e-4914-9993-ab7206b50a5c',
+#     input={'text': user_speech_text}).get_result()
+#     print(json.dumps(response, indent=2))
+#     watson_text_response = response['output']['text'][0]
+#     watson_text_response = '{}'.format(watson_text_response)
+#     return watson_text_response
 
 def transcribe_audio(path_to_audio_file):
     # initialize speech to text service
