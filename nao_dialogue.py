@@ -42,6 +42,13 @@ assistant = AssistantV1(
     url='https://gateway.watsonplatform.net/assistant/api'
 )
 
+# initialize Watson Tone Analyzer
+tone_analyzer = ToneAnalyzerV3(
+    version='2017-09-21',
+    iam_apikey='lcyNkGVUvRAKH98-K-pQwlUT0oG24TyY9OYUBXXIvaTk',
+    url='https://gateway.watsonplatform.net/tone-analyzer/api'
+)
+
 # to retrieve intents, user examples, entities from Watson Assistant
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
@@ -49,35 +56,27 @@ workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 tone_hist = []
 
 # create Watson Assistant dialogue loguc
-def start_emo_convo(user_input_text):
+def analyze_intents_tone(user_input_text):
     # call the Watson Tone analyzer service
     # get the current tone from tone analyzer service
     # append tone and tone score to dictionary to maintain tone history
     # get Nao response according to tone and intent conditions
-    tone = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
-    print(json.dumps(tone, indent=2))
-    detected_emotion, tone_hist = get_top_emo(user_input_text, tone)
+    # print user_input_text['input']
+    tone_analysis = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
+    print(json.dumps(tone_analysis, indent=2))
+    detected_emotion, tone_hist = get_top_emo(user_input_text, tone_analysis)
     print "detected_emotion", detected_emotion
+    print "tone history: ", tone_hist
     
     # detect intents 
     response = assistant.message(workspace_id=workspace_id,
-                                 input=input_text['input']).get_result(),
+                                 input=user_input_text['input']).get_result(),
     print(json.dumps(response, indent=2))
 
     # print detected intent
-    print response[0]['intents'][0]['intent']
+    print "detected intent: ", response[0]['intents'][0]['intent']
 
-    # user states they went to work for the day
-    if response[0]['intents'][0]['intent']== "work":
-        get_nao_response("I see. Did anything interesting happen?")
-    
-    # user states they read for the day
-    elif response[0]['intents'][0]['intent']== "reading":
-        get_nao_response("Oh what book were you reading?")
-    
-    # user states they visited friends 
-    elif response[0]['intents'][0]['intent'] == "friends":
-        get_nao_response("Oh, which friend were you with?")
+    return response
 
 def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
@@ -115,7 +114,7 @@ def transcribe_audio(path_to_audio_file):
             ).get_result()
 
 # get the top emotion
-def get_top_emo(user_speech_text,tone):
+def get_top_emo(user_speech_text,tone_analysis):
     
     # initialize emotion data
     max_score = 0.0
@@ -136,7 +135,7 @@ def get_top_emo(user_speech_text,tone):
         if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
             top_emotion = 'neutral'
             top_emo_score = None
-        print top_emotion, top_emo_score
+        print "top emotion, top score: ", top_emotion, top_emo_score
         
         # append tone and tone score to tone history list
         tone_hist.append({
@@ -200,16 +199,23 @@ def main():
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
                 # test to check quality of .wav recording
-                speech = AudioSegment.from_wav("speak32.wav")
-                play(speech)
+                #speech = AudioSegment.from_wav("speak32.wav")
+                #play(speech)
                 try:
                     speech_recognition_results = transcribe_audio('speak32.wav')
                     print(json.dumps(speech_recognition_results, indent=2))
-                    user_speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
-                    print("User Speech Text: " + user_speech_text + "\n")
+                    speech_text = speech_recognition_results['results'][0]['alternatives'][0]['transcript'] 
+                    print("User Speech Text: " + speech_text + "\n")
+
+                    user_speech_text = {
+                        'workspace_id': workspace_id,
+                        'input': {
+                            'text': speech_text
+                        }
+                    }
 
                     # send user_speech_text to Watson Assistant to be analyzed for intents and tone
-                    start_emo_convo(user_speech_text)
+                    response = analyze_intents_tone(user_speech_text)
                  
 
                     # get watson text response from Watson Assistant
@@ -221,16 +227,25 @@ def main():
                     #    get_nao_response(watson_text_response)
                     #    break
                     
+                    # user states they went to work for the day
+                    if response[0]['intents'][0]['intent']== "work":
+                        get_nao_response("I see. Did anything interesting happen?")
+                    
+                    # user states they read for the day
+                    elif response[0]['intents'][0]['intent']== "reading":
+                        get_nao_response("Oh what book were you reading?")
+                    
+                    # user states they visited friends 
+                    elif response[0]['intents'][0]['intent'] == "friends":
+                        get_nao_response("Oh, which friend were you with?")
+
                     # trigger to end conversation
-                    if "not" and "talk" in user_speech_text:
-                       print "stop conversation"
-                       get_nao_response("Okay talk soon!")
-                       break
+                    elif response[0]['intents'][0]['intent'] == "stoptalking":
+                        get_nao_response("Ok, let me know if you ever need anything!")
+                        break
                      
-                    else:
-                        #start recording again
-                        #get_nao_response(watson_text_response)             
-                        nao_response = "Hmm. I couldn't catch your tone. Try telling me what's going on again."
+                    else:          
+                        nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
                         get_nao_response(nao_response) 
                         print "Nao response: " + nao_response + "\n"
                         print "resuming"  
