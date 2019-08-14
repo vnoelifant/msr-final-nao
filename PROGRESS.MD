@@ -244,6 +244,10 @@ catch index error and print results. Write pseudocode in functions first. Fill i
 
         [![IMAGE ALT TEXT](http://img.youtube.com/vi/JUtHe4Xc7yo/0.jpg)](http://www.youtube.com/watch?v=JUtHe4Xc7yo "Nao Detects Intents") 
 
+        * Tested dialogue turn for which Nao detects intent and tone, demo here:
+               [![IMAGE ALT TEXT](http://img.youtube.com/vi/lKt5tbmk0Mw/0.jpg)](http://www.youtube.com/watch?v=lKt5tbmk0Mw "Nao Detects Intents and Tone") 
+
+
     * #### Issues
       * Tone history dictionary not adding values correctly, seems to be overwritten every time recorder is called, and values dupilicated
       * Highest tone score not calculated properly, two values are returned.
