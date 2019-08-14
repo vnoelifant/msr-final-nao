@@ -115,7 +115,7 @@ def get_top_emo(user_speech_text,tone_analysis):
         if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
             top_emotion = 'neutral'
             top_emo_score = None
-        print "top emotion, top score: ", top_emotion, top_emo_score
+        #print "top emotion, top score: ", top_emotion, top_emo_score
         
         # append tone and tone score to tone history list
         tone_hist.append({
@@ -198,12 +198,12 @@ def main():
                     print "tone history: ", tone_hist
                     
                     # user states they went to work for the day
-                    if detected_intent == "work":
+                    if detected_intent == "work" and detected_emotion == None:
                         get_nao_response("I see. Did anything interesting happen?")
-                        if detected_emotion == "sadness" or detected_emotion == "fear":
-                            get_nao_response("Oh no! Do you want to talk about it?")
-                        elif detected_emotion == "joy" or detected_emotion == "confidence":
-                            get_nao_response("Oh wow! Tell me about it!")
+                    if detected_intent == "work" and detected_emotion == "sadness" or detected_emotion == "tentative":
+                        get_nao_response("Oh no! Do you want to talk about it?")
+                    elif detected_intent == "work" and detected_emotion == "joy" or detected_emotion == "confidence":
+                        get_nao_response("Oh wow! Tell me about it!")
 
                     # user states they read for the day
                     elif detected_intent == "reading":
@@ -217,7 +217,9 @@ def main():
                     elif detected_intent == "stoptalking":
                         get_nao_response("Ok, let me know if you ever need anything!")
                         break
-                     
+                    
+                    #SoundReceiver.resume_recording() 
+                
                 except:
                     nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
                     get_nao_response(nao_response) 
