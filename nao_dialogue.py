@@ -45,27 +45,39 @@ assistant = AssistantV1(
 # to retrieve intents, user examples, entities from Watson Assistant
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
+# conainer for tone history
+tone_hist = []
+
 # create Watson Assistant dialogue loguc
 def start_emo_convo(user_input_text):
     # call the Watson Tone analyzer service
     # get the current tone from tone analyzer service
     # append tone and tone score to dictionary to maintain tone history
     # get Nao response according to tone and intent conditions
-    response = assistant.get_workspace(
-    workspace_id=workspace_id, export=True).get_result()
-    print(json.dumps(response, indent=2))
-    print "intent",response['intents'][0]['intent']
-
     tone = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
-    detected_emotion = get_top_emo(user_input_text, tone)
+    print(json.dumps(tone, indent=2))
+    detected_emotion, tone_hist = get_top_emo(user_input_text, tone)
     print "detected_emotion", detected_emotion
     
+    # detect intents 
+    response = assistant.message(workspace_id=workspace_id,
+                                 input=input_text['input']).get_result(),
+    print(json.dumps(response, indent=2))
+
+    # print detected intent
+    print response[0]['intents'][0]['intent']
+
     # user states they went to work for the day
-    if response['intents'][0]['intent']== "work" and \
-        detected_emotion !='sadness':
-        #print "Ok, you are not sad"
-        nao_response = "I see. Did anything interesting happen there?"
-        get_nao_response(nao_response)
+    if response[0]['intents'][0]['intent']== "work":
+        get_nao_response("I see. Did anything interesting happen?")
+    
+    # user states they read for the day
+    elif response[0]['intents'][0]['intent']== "reading":
+        get_nao_response("Oh what book were you reading?")
+    
+    # user states they visited friends 
+    elif response[0]['intents'][0]['intent'] == "friends":
+        get_nao_response("Oh, which friend were you with?")
 
 def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
@@ -102,22 +114,37 @@ def transcribe_audio(path_to_audio_file):
                 keywords_threshold=0.5
             ).get_result()
 
+# get the top emotion
 def get_top_emo(user_speech_text,tone):
+    
+    # initialize emotion data
     max_score = 0.0
     top_emotion = None
     top_emo_score = None
+    
+    # createdictionary of tones
     tone_dict = tone_analysis['document_tone']['tones']
+    
+    # find the emotion with the highest tone score
     for tone in tone_dict:
         if tone['score'] > max_score:
             max_score = tone['score']
             top_emotion = tone['tone_name'].lower()
             top_emo_score = tone['score']
 
+        # set a neutral emotion if under tone score threshold
         if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
             top_emotion = 'neutral'
             top_emo_score = None
         print top_emotion, top_emo_score
-    return top_emotion
+        
+        # append tone and tone score to tone history list
+        tone_hist.append({
+                    'tone_name': top_emotion,
+                    'score': top_emo_score
+         })
+ 
+    return top_emotion, tone_hist
 
 def main():
     """ Main entry point
@@ -166,7 +193,6 @@ def main():
     SoundReceiver.start_recording() 
 
     try:
-        #sad_nao_response = sad_emo_gen()
         # waiting while recording in progress
         while True:
             time.sleep(1)
