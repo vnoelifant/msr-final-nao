@@ -196,7 +196,9 @@ catch index error and print results. Write pseudocode in functions first. Fill i
       * Coded tone detection for simple sad emotion dialogue scenario per flowchart (death scenario). 
         * Tested with success on Nao. See demo below!
 
-        [![IMAGE ALT TEXT](http://img.youtube.com/vi/3_psNvxDgfc/0.jpg)](http://www.youtube.com/watch?v=3_psNvxDgfc "Nao Detects Silence")
+        [![IMAGE ALT TEXT](http://img.youtube.com/vi/3_psNvxDgfc/0.jpg)](http://www.youtube.com/watch?v=3_psNvxDgfc "Nao Detects Sadness")
+
+        JUtHe4Xc7yo
 
     * #### Issues
       * Watson Natural Language Understanding seems to only take long text input vs Tone Analyzer. For instance "I am sad" on NLU yielded a response error message requesting more text input
@@ -225,7 +227,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
       * Focus on intents and Nao not asking for feelings
         * Ex. "How was work?"
 
-* ## **Week 8/5/19 Goals**
+* ## **Week 8/12/19 Goals**
   * The immediate goal is to be able to discern emotion without directly asking about it.
   * The plan is to create a dialog tree based on intents.
     * The responses are also passed to the tone detector and analyzed for tone
@@ -233,6 +235,24 @@ catch index error and print results. Write pseudocode in functions first. Fill i
     * After a few question, the AI should guess at the person's tone.
     * You should create a dialog tree explaining how you wish the dialog should go and then implement it in code. This is similar to what was done on the board during 8/8/19 meeting except that each possible branch should be labeled with an intent and/or a tone score that causes that branch to be taken 
 
+    * ### **8/14 Meeting Agenda**:
+    * #### Accomplishments
+      * Coded portion of dialogue flow to detect Watson intents for daily activites. 
+        * Tested intents:
+          * work, reading, friends
+        * Tested with success on Nao. See demo below!
+
+        [![IMAGE ALT TEXT](http://img.youtube.com/vi/JUtHe4Xc7yo/0.jpg)](http://www.youtube.com/watch?v=JUtHe4Xc7yo "Nao Detects Intents") 
+
+    * #### Issues
+      * 
+    * #### TODO
+      * Add code to account for accumulative tone score per successive dialog level in the tree
+      * AI portion of project
+        * Look into capabilities of RASA Python dialogue framework
+  
+  * ### **8/14/19 Meeting Minutes**:
+    
 
 
 
