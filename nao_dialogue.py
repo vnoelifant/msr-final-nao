@@ -64,15 +64,13 @@ def analyze_intents_tone(user_input_text):
     tone_analysis = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
     print(json.dumps(tone_analysis, indent=2))
     detected_emotion, tone_hist = get_top_emo(user_input_text, tone_analysis)
-    print "detected_emotion", detected_emotion
-    print "tone history: ", tone_hist
+ 
     # detect intents 
     response = assistant.message(workspace_id=workspace_id,
                                  input=user_input_text['input']).get_result(),
     print(json.dumps(response, indent=2))
-    # print detected intent
-    print "detected intent: ", response[0]['intents'][0]['intent']
-    return response
+    
+    return response, detected_emotion, tone_hist
 
 # convert text to speech via Nao TTS
 def get_nao_response(nao_text):
@@ -103,7 +101,7 @@ def get_top_emo(user_speech_text,tone_analysis):
     top_emotion = None
     top_emo_score = None
     
-    # createdictionary of tones
+    # create dictionary of tones
     tone_dict = tone_analysis['document_tone']['tones']
     
     # find the emotion with the highest tone score
@@ -191,22 +189,32 @@ def main():
                     }
 
                     # send user_speech_text to Watson Assistant to be analyzed for intents and tone
-                    response = analyze_intents_tone(user_speech_text)
+                    response, detected_emotion, tone_hist = analyze_intents_tone(user_speech_text)
+                    
+                    # print detected intent, detection emotion, tone history dictionary
+                    detected_intent = response[0]['intents'][0]['intent']
+                    print "detected intent: ", response[0]['intents'][0]['intent']
+                    print "detected_emotion", detected_emotion
+                    print "tone history: ", tone_hist
                     
                     # user states they went to work for the day
-                    if response[0]['intents'][0]['intent']== "work":
+                    if detected_intent == "work":
                         get_nao_response("I see. Did anything interesting happen?")
-                    
+                        if detected_emotion == "sadness" or detected_emotion == "fear":
+                            get_nao_response("Oh no! Do you want to talk about it?")
+                        elif detected_emotion == "joy" or detected_emotion == "confidence":
+                            get_nao_response("Oh wow! Tell me about it!")
+
                     # user states they read for the day
-                    elif response[0]['intents'][0]['intent']== "reading":
+                    elif detected_intent == "reading":
                         get_nao_response("Oh what book were you reading?")
                     
                     # user states they visited friends 
-                    elif response[0]['intents'][0]['intent'] == "friends":
+                    elif detected_intent == "friends":
                         get_nao_response("Oh, which friend were you with?")
 
                     # trigger to end conversation
-                    elif response[0]['intents'][0]['intent'] == "stoptalking":
+                    elif detected_intent == "stoptalking":
                         get_nao_response("Ok, let me know if you ever need anything!")
                         break
                      
