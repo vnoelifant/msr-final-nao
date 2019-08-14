@@ -245,9 +245,12 @@ catch index error and print results. Write pseudocode in functions first. Fill i
         [![IMAGE ALT TEXT](http://img.youtube.com/vi/JUtHe4Xc7yo/0.jpg)](http://www.youtube.com/watch?v=JUtHe4Xc7yo "Nao Detects Intents") 
 
     * #### Issues
-      * 
+      * Tone history dictionary not adding values correctly, seems to be overwritten every time recorder is called, and values dupilicated
+      * Highest tone score not calculated properly, two values are returned.
+      * Watson Assistant seems to always expect intents after every conversation turn. 
+        * How to I modify code to keep same intent when analyzing tones per that one intent?
     * #### TODO
-      * Add code to account for accumulative tone score per successive dialog level in the tree
+      * Debug code to account for accumulative tone score per successive dialog level in the tree
       * AI portion of project
         * Look into capabilities of RASA Python dialogue framework
   
