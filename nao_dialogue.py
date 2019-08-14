@@ -55,49 +55,31 @@ workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 # conainer for tone history
 tone_hist = []
 
-# create Watson Assistant dialogue loguc
+# create Watson Assistant dialogue logic:
+# call the Watson Tone analyzer service
+# get the current tone from tone analyzer service
+# append tone and tone score to dictionary to maintain tone history
+# get Nao response according to tone and intent conditions
 def analyze_intents_tone(user_input_text):
-    # call the Watson Tone analyzer service
-    # get the current tone from tone analyzer service
-    # append tone and tone score to dictionary to maintain tone history
-    # get Nao response according to tone and intent conditions
-    # print user_input_text['input']
     tone_analysis = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
     print(json.dumps(tone_analysis, indent=2))
     detected_emotion, tone_hist = get_top_emo(user_input_text, tone_analysis)
     print "detected_emotion", detected_emotion
     print "tone history: ", tone_hist
-    
     # detect intents 
     response = assistant.message(workspace_id=workspace_id,
                                  input=user_input_text['input']).get_result(),
     print(json.dumps(response, indent=2))
-
     # print detected intent
     print "detected intent: ", response[0]['intents'][0]['intent']
-
     return response
 
+# convert text to speech via Nao TTS
 def get_nao_response(nao_text):
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
     tts.say(nao_text)
 
-# def get_watson_response(user_speech_text):
-#     # initialize the Watson Assistant
-#     assistant = AssistantV1(
-#         version='2019-02-28',
-#         iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
-#         url='https://gateway.watsonplatform.net/assistant/api'
-#     )
-
-#     response = assistant.message(
-#     workspace_id='5db84ece-e19e-4914-9993-ab7206b50a5c',
-#     input={'text': user_speech_text}).get_result()
-#     print(json.dumps(response, indent=2))
-#     watson_text_response = response['output']['text'][0]
-#     watson_text_response = '{}'.format(watson_text_response)
-#     return watson_text_response
-
+# convert speech to text via Watson STT
 def transcribe_audio(path_to_audio_file):
     # initialize speech to text service
     speech_to_text = SpeechToTextV1(
@@ -176,11 +158,8 @@ def main():
 
 
     # Warning: SoundReceiver must be a global variable
-    # The name given to the constructor must be the name of the variable
-    #fileCounter += 1
     global SoundReceiver
     SoundReceiver = SoundReceiverModule("SoundReceiver", pip)
-
 
     # Nao wants to know what you did today
     nao_response = "Hello, what did you do today?"
@@ -198,9 +177,6 @@ def main():
             # done recording; ready to transcribe speech
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
-                # test to check quality of .wav recording
-                #speech = AudioSegment.from_wav("speak32.wav")
-                #play(speech)
                 try:
                     speech_recognition_results = transcribe_audio('speak32.wav')
                     print(json.dumps(speech_recognition_results, indent=2))
@@ -216,16 +192,6 @@ def main():
 
                     # send user_speech_text to Watson Assistant to be analyzed for intents and tone
                     response = analyze_intents_tone(user_speech_text)
-                 
-
-                    # get watson text response from Watson Assistant
-                    #watson_text_response = get_watson_response(user_speech_text)
-                    #print("Watson Text Response",watson_text_response)
-                    # trigger to end conversation
-                    #if watson_text_response == "Ok goodbye":
-                    #    print "stop conversation"
-                    #    get_nao_response(watson_text_response)
-                    #    break
                     
                     # user states they went to work for the day
                     if response[0]['intents'][0]['intent']== "work":
@@ -244,20 +210,14 @@ def main():
                         get_nao_response("Ok, let me know if you ever need anything!")
                         break
                      
-                    else:          
-                        nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
-                        get_nao_response(nao_response) 
-                        print "Nao response: " + nao_response + "\n"
-                        print "resuming"  
-                        SoundReceiver.resume_recording() 
-                  
                 except:
+                    nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
+                    get_nao_response(nao_response) 
                     traceback.print_exc()
                     print "try speaking again"
                     
                 print "resuming after traceback"
-                SoundReceiver.resume_recording() 
-            
+                SoundReceiver.resume_recording()        
     
     except KeyboardInterrupt:
         # closing
