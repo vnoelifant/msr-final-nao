@@ -221,16 +221,21 @@ def main():
                     #    get_nao_response(watson_text_response)
                     #    break
                     
+                    # trigger to end conversation
+                    if "not" and "talk" in user_speech_text:
+                       print "stop conversation"
+                       get_nao_response("Okay talk soon!")
+                       break
+                     
                     else:
                         #start recording again
-                        #get_nao_response(watson_text_response)
-                                       
+                        #get_nao_response(watson_text_response)             
                         nao_response = "Hmm. I couldn't catch your tone. Try telling me what's going on again."
-                        get_nao_response(nao_response)
+                        get_nao_response(nao_response) 
+                        print "Nao response: " + nao_response + "\n"
                         print "resuming"  
                         SoundReceiver.resume_recording() 
-                    print("Nao response: " + nao_response + "\n")  
-                
+                  
                 except:
                     traceback.print_exc()
                     print "try speaking again"
