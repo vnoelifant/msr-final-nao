@@ -117,6 +117,11 @@ def get_top_emo(user_speech_text,tone_analysis):
             top_emo_score = None
         #print "top emotion, top score: ", top_emotion, top_emo_score
         
+        # update tone_response emotion tone
+        tone_analysis['document_tone']['tones']['tone_name'].lower() = top_emotion
+        tone_analysis['document_tone']['tones']['score'] = top_emo_score
+        print "updated tone analysis", tone_analysis
+
         # append tone and tone score to tone history list
         tone_hist.append({
                     'tone_name': top_emotion,
@@ -163,8 +168,9 @@ def main():
     nao_response = "Hello, what did you do today?"
     get_nao_response(nao_response)
     
-    print("Please say something into NAO's microphone\n")
+    intent_state = "" # initializing intent state
     
+    print("Please say something into NAO's microphone\n")
     # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
@@ -175,6 +181,7 @@ def main():
             # done recording; ready to transcribe speech
             if SoundReceiver.recording == False:
                 print "stopped recording, ready to transcribe"
+                
                 try:
                     speech_recognition_results = transcribe_audio('speak32.wav')
                     print(json.dumps(speech_recognition_results, indent=2))
@@ -198,13 +205,9 @@ def main():
                     print "tone history: ", tone_hist
                     
                     # user states they went to work for the day
-                    if detected_intent == "work" and detected_emotion == None:
+                    if detected_intent == "work": #and detected_emotion == None:
                         get_nao_response("I see. Did anything interesting happen?")
-                    if detected_intent == "work" and detected_emotion == "sadness" or detected_emotion == "tentative":
-                        get_nao_response("Oh no! Do you want to talk about it?")
-                    elif detected_intent == "work" and detected_emotion == "joy" or detected_emotion == "confidence":
-                        get_nao_response("Oh wow! Tell me about it!")
-
+                 
                     # user states they read for the day
                     elif detected_intent == "reading":
                         get_nao_response("Oh what book were you reading?")
@@ -218,6 +221,8 @@ def main():
                         get_nao_response("Ok, let me know if you ever need anything!")
                         break
                     
+                    # save the intent in state variable
+                    intent_state = detected_intent
                     #SoundReceiver.resume_recording() 
                 
                 except:
