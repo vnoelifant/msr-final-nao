@@ -9,8 +9,8 @@
 ###########################################################
 
 import os
-from pydub import AudioSegment
-from pydub.playback import play
+#from pydub import AudioSegment
+#from pydub.playback import play
 import json
 from os.path import join, dirname
 from ibm_watson import SpeechToTextV1, AssistantV1,NaturalLanguageUnderstandingV1,ToneAnalyzerV3
@@ -55,6 +55,9 @@ workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 # conainer for tone history
 tone_hist = []
 
+# container for intent history
+intent_list = []
+
 # create Watson Assistant dialogue logic:
 # call the Watson Tone analyzer service
 # get the current tone from tone analyzer service
@@ -63,8 +66,8 @@ tone_hist = []
 def analyze_intents_tone(user_input_text):
     tone_analysis = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
     print(json.dumps(tone_analysis, indent=2))
+    
     detected_emotion, tone_hist = get_top_emo(user_input_text, tone_analysis)
- 
     # detect intents 
     response = assistant.message(workspace_id=workspace_id,
                                  input=user_input_text['input']).get_result(),
@@ -118,7 +121,7 @@ def get_top_emo(user_speech_text,tone_analysis):
         #print "top emotion, top score: ", top_emotion, top_emo_score
         
         # update tone_response emotion tone
-        tone_analysis['document_tone']['tones']['tone_name'].lower() = top_emotion
+        tone_analysis['document_tone']['tones']['tone_name'] = top_emotion
         tone_analysis['document_tone']['tones']['score'] = top_emo_score
         print "updated tone analysis", tone_analysis
 
@@ -130,10 +133,37 @@ def get_top_emo(user_speech_text,tone_analysis):
  
     return top_emotion, tone_hist
 
+# list of responses from nao for work intent
+def work_intent():
+    yield "Oh, how was work?"
+    yield "Ah. how were they?"
+    yield "Oh no, do you want to talk about it?"
+    yield "Aw, why is that?"
+
+def reading_intent():
+    yield "Oh, what book did you read?"
+    yield "Cool, what was it about?"
+
+def friends_intent():
+    yield "Oh, which friend did you visit?"
+    yield "Oh,what did you all do?"
+
+def get_my_intent():
+    yield "work"
+    yield "reading"
+    yield "friends"
+
+def work_convo(intent_list, response, curr_intent):
+    return intent_list[0] == "work" or response[0]['intents'][0]['intent'] == "" \
+    or curr_intent == "work" 
+
 def main():
     """ Main entry point
 
     """
+    # initialize generator objet for work intent
+    res_work = work_intent()
+    
     # Configure initial Naoqi and Watson settings
     parser = OptionParser()
     parser.add_option("--pip",
@@ -175,6 +205,7 @@ def main():
     SoundReceiver.start_recording() 
 
     try:
+        print "intent_state", intent_state
         # waiting while recording in progress
         while True:
             time.sleep(1)
@@ -198,33 +229,25 @@ def main():
                     # send user_speech_text to Watson Assistant to be analyzed for intents and tone
                     response, detected_emotion, tone_hist = analyze_intents_tone(user_speech_text)
                     
-                    # print detected intent, detection emotion, tone history dictionary
-                    detected_intent = response[0]['intents'][0]['intent']
-                    print "detected intent: ", response[0]['intents'][0]['intent']
-                    print "detected_emotion", detected_emotion
-                    print "tone history: ", tone_hist
-                    
-                    # user states they went to work for the day
-                    if detected_intent == "work": #and detected_emotion == None:
-                        get_nao_response("I see. Did anything interesting happen?")
-                 
-                    # user states they read for the day
-                    elif detected_intent == "reading":
-                        get_nao_response("Oh what book were you reading?")
-                    
-                    # user states they visited friends 
-                    elif detected_intent == "friends":
-                        get_nao_response("Oh, which friend were you with?")
-
-                    # trigger to end conversation
-                    elif detected_intent == "stoptalking":
-                        get_nao_response("Ok, let me know if you ever need anything!")
-                        break
-                    
-                    # save the intent in state variable
-                    intent_state = detected_intent
-                    #SoundReceiver.resume_recording() 
+                    if response[0]['intents'][0]['intent'] == "work":
+                        intent_list.append("work")
+                        print "intent_list", intent_list
+                        curr_intent = "work"
                 
+                    if response[0]['intents'][0]['intent'] == "reading":
+                        pass
+                    
+                    if response[0]['intents'][0]['intent'] == "friends":
+                        pass
+    
+                    work_intent_res = work_convo(intent_list, response, curr_intent)
+                
+                    if work_intent_res or response[0]['entities'][0]['value'] == "meeting": 
+                        print "detected work convo"
+                        get_nao_response(next(res_work))
+
+                    print "tone hist", tone_hist
+
                 except:
                     nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
                     get_nao_response(nao_response) 
