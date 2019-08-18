@@ -121,8 +121,8 @@ def get_top_emo(user_speech_text,tone_analysis):
         #print "top emotion, top score: ", top_emotion, top_emo_score
         
         # update tone_response emotion tone
-        tone_analysis['document_tone']['tones']['tone_name'] = top_emotion
-        tone_analysis['document_tone']['tones']['score'] = top_emo_score
+        tone_analysis['document_tone']['tones'][0]['tone_name'] = top_emotion
+        tone_analysis['document_tone']['tones'][0]['score'] = top_emo_score
         print "updated tone analysis", tone_analysis
 
         # append tone and tone score to tone history list
@@ -198,14 +198,14 @@ def main():
     nao_response = "Hello, what did you do today?"
     get_nao_response(nao_response)
     
-    intent_state = "" # initializing intent state
+    #intent_state = "" # initializing intent state
     
     print("Please say something into NAO's microphone\n")
     # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
     try:
-        print "intent_state", intent_state
+        #print "intent_state", intent_state
         # waiting while recording in progress
         while True:
             time.sleep(1)
@@ -228,7 +228,7 @@ def main():
 
                     # send user_speech_text to Watson Assistant to be analyzed for intents and tone
                     response, detected_emotion, tone_hist = analyze_intents_tone(user_speech_text)
-                    
+                    print "tone hist", tone_hist
                     if response[0]['intents'][0]['intent'] == "work":
                         intent_list.append("work")
                         print "intent_list", intent_list
@@ -246,7 +246,7 @@ def main():
                         print "detected work convo"
                         get_nao_response(next(res_work))
 
-                    print "tone hist", tone_hist
+                    #print "tone hist", tone_hist
 
                 except:
                     nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
@@ -254,7 +254,7 @@ def main():
                     traceback.print_exc()
                     print "try speaking again"
                     
-                print "resuming after traceback"
+                print "resuming"
                 SoundReceiver.resume_recording()        
     
     except KeyboardInterrupt:
