@@ -116,6 +116,7 @@ def invoke_intent_conversation(user_speech_text,intent_list,first_response):
     print "response with detected intent"
     print(json.dumps(intent_response, indent=2))
     print "first detected intent from intent list: ",intent_list[0]
+    # update intent in response object with initial detected intent
     intent_response['intents'][0]['intent'] = intent_list[0] 
     print "first detected intent: ",intent_response['intents'][0]['intent']
     return intent_response
