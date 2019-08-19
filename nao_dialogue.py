@@ -156,10 +156,31 @@ def friends_intent():
     yield "Oh, which friend did you visit?"
     yield "Oh,what did you all do?"
 
+# get response from Nao based on intents and/or entities
+def get_convo_response(intent_list,intent_response,keep_intent,res_work, res_reading, res_friends):
+    # if driving the conversation flow based on first detected intent
+    if keep_intent:
+        print "first detected intent from intent list: ",intent_list[0]
+        intent_response['intents'][0]['intent'] = intent_list[0] 
+        print "detected intent",intent_response['intents'][0]['intent']
+        
+        if intent_response['intents'][0]['intent'] == "work":
+            print "detected work convo"
+            get_nao_response(next(res_work))
+        elif intent_response['intents'][0]['intent'] == "reading":
+            print "detected reading convo"
+            get_nao_response(next(res_reading))
+        elif intent_response['intents'][0]['intent'] == "friends":
+            print "detected friends convo"
+            get_nao_response(next(res_friends))
+    else:
+        # TODO: add more conditional code here to redirect conversation not based on 
+        # maintained initial intent
+        print "generate response not based on initial maintained intent"
+        print "detected intent: ",intent_response['intents'][0]['intent'] 
 
-def work_convo(intent_list, response, curr_intent):
-    return intent_list[0] == "work" or response[0]['intents'][0]['intent'] == "" \
-    or curr_intent == "work" 
+    print "response"
+    print(json.dumps(intent_response, indent=2))
 
 def main():
     """ Main entry point
@@ -229,60 +250,28 @@ def main():
                         }
                     } 
                     
+                    # TODO: Update tone analyzer conditional logic
                     # send user_speech_text to Watson Tone Analyzer to be analyzed for tone
                     # detected_emotion, tone_hist = analyze_tone(user_speech_text)
+                    
                     # send user_speech_text to Watson Assistant to be analyzed for intents and entities 
-                    
-                    intent_list,intent_response = get_intent_response(input_text)
-                    
                     try:
+                        # generate intents
+                        intent_list,intent_response = get_intent_response(input_text)
                         # dialogue flow based on first detected intent maintained and unchanged
-                        # throughout conversation turns
-                        if keep_intent:
-                            print "first detected intent from intent list: ",intent_list[0]
-                            intent_response['intents'][0]['intent'] = intent_list[0] 
-                            print "detected intent",intent_response['intents'][0]['intent']
-                        
-                            if intent_response['intents'][0]['intent'] == "work":
-                                 print "detected work convo"
-                                 print(next(res_work))
-                            if intent_response['intents'][0]['intent'] == "reading":
-                                print "detected reading convo"
-                                print(next(res_reading))
-                            elif intent_response['intents'][0]['intent'] == "friends":
-                                print "detected friends convo"
-                                print(next(res_friends))
-                        # dialogue flow based on any any intent, not maintained per conversation turn
-                        else:
-                            print "Just getting a random response, not in intent flow"
-                            print "detected intent :",intent_response['intents'][0]['intent'] 
-                        print "response"
-                        print(json.dumps(intent_response, indent=2))
-                                
+                        # throughout conversation turn or not maintained
+                        get_convo_response(intent_list,intent_response,keep_intent,res_work, res_reading,res_friends)           
                     except:
                         traceback.print_exc()
                         print "error in intent detection"
-                        if keep_intent:
-                            print "getting response for first intent"
-                            intent_response['intents'][0]['intent'] = intent_list[0]
-                            print "intent on error",intent_response['intents'][0]['intent']
-                            if intent_response['intents'][0]['intent'] == "work" or intent_response['entities'][0]['value'] == "meeting":
-                                get_nao_response(next(res_work))
-                            elif intent_response['intents'][0]['intent'] == "reading":
-                                get_nao_response(next(res_reading))
-                            elif intent_response['intents'][0]['intent'] == "friends":
-                                get_nao_response(next(res_friends))
-                        else:
-                            print "a random response"
-                            print "detected intent :",intent_response['intents'][0]['intent'] 
-                        #print(json.dumps(intent_response, indent=2))
+                        get_convo_response(intent_list,intent_response,keep_intent)   
                 except:
                     print "error in speech detection"
                     nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
                     get_nao_response(nao_response) 
                     traceback.print_exc()
                     print "try speaking again"
-                    
+         
                 print "resuming"
                 SoundReceiver.resume_recording()        
     
