@@ -264,13 +264,17 @@ def main():
                     except:
                         traceback.print_exc()
                         print "error in intent detection"
-                        get_convo_response(intent_list,intent_response,keep_intent)   
+                        nao_response = "Hmm. I couldn't understand you. Can you repeat what you just said?"
+                        get_nao_response(nao_response) 
+                        pass
+                        #get_convo_response(intent_list,intent_response,keep_intent)   
                 except:
                     print "error in speech detection"
                     nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
                     get_nao_response(nao_response) 
                     traceback.print_exc()
                     print "try speaking again"
+                    pass
          
                 print "resuming"
                 SoundReceiver.resume_recording()        
