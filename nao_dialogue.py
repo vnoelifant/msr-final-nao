@@ -274,10 +274,11 @@ def main():
                         # detected_emotion, tone_hist = analyze_tone(user_speech_text)
                     
                         # send user_speech_text to Watson Assistant to be analyzed for intents and entities 
-
+                        # dialogue flow is based on intents,entities (maintained or not maintained), and tone
                         try:
-                            # dialogue flow based on first detected intent maintained and unchanged
+                            # dialogue flow based on first detected intent maintained 
                             # throughout conversation turn or not maintained
+                            # TODO: Add tone analysis
                             if keep_intent:
                                 if len(intent_list) > 0:
                                     pass
@@ -328,6 +329,22 @@ def main():
                                         traceback.print_exc()
                                         print "can't find entity, go on"
                                         pass
+                                # TODO: Add reading entities and tone analysis
+                                elif intent_list[0]  == "reading":
+                                    try:
+                                        print "detected reading convo"
+                                        print(next(res_reading))
+                                except StopIteration:
+                                    pass
+                                
+                                # TODO: Add friends entities and tone analysis
+                                elif intent_list[0] == "friends":
+                                    try:
+                                        print "detected friends convo"
+                                        print(next(res_friends))
+                                    except StopIteration:
+                                        pass
+
                             else:
                                 # TODO: add more conditional code here to redirect conversation not based on 
                                 # maintained initial intent
