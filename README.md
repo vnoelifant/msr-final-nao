@@ -66,76 +66,38 @@ This is the final project of the Northwestern MSR project. This project is an ex
 ![](images/nao_dialogue.png)
 
 
-## List of Intents and Entities (IN WORK)
+## List of Intents and Entities (IN WORK, Updated 8/20/19)
 
-|  **Tone Analyzer Tone** | **Intents** | **Entities** | **Entity Values** |
-| --- | --- | --- | --- |
-|  **sadness** | **emotion_sadness** |  |  |
-|   | job_loss |  |  |
-|   | breakup |  |  |
-|   | death | person | relative |
-|   |  |  | friend |
-|   |  |  | coworker |
-|   | self_loathing |  |  |
-|   | hurt_someone | person | relative |
-|   |  |  | friend |
-|   |  |  | coworker |
-|   | for_someone |  |  |
-|   | job_loss |  |  |
-|   | breakup |  |  |
-|   | death | person | relative |
-|   |  |  | friend |
-|   |  |  | coworker |
-|  **fear** | **emotion_fear** |  |  |
-|   | upcoming event | event | presentation |
-|   |  |  | performance |
-|   | thrilling_ride |  |  |
-|   | safety | person | me |
-|   |  |  | relative |
-|   |  |  | friend |
-|   |  |  | coworker |
-|   |  | situation | robbery |
-|   |  |  | blackmail |
-|   |  |  |  |
-|   |  |  |  |
-|  **joy** | **emotion_happy** |  |  |
-|   | job_event | event | promotion |
-|   |  |  | hired |
-|   | romance_event | event | anniversary |
-|   |  |  | marriage |
-|   |  |  | relationship |
-|   | family_event | birth | son |
-|   |  |  | daughter |
-|   |  |  | niece |
-|   |  |  | nephew |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|  **anger** | **emotion_anger** |  |  |
-|   | self_anger | mistake | job |
-|   |  |  | household |
-|   |  |  |  |
-|   |  |  |  |
-|   | external_anger | situation | hate_crime |
-|   |  |  | politics |
-|   |  |  |  |
-|   |  | person | boss |
-|   |  |  | spouse |
-|   |  |  |  |
-|  **tentative** | **emotion_tentative** |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|  **confident** | **emotion_confident** |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|   |  |  |  |
-|  **analytical** | **emotion_analytical** |  |  |
+|  **Intents** | **Entities** | **Entity Values** |
+| --- | --- | --- |
+|  **work** | **person** | coworker |
+|  **** |  | boss |
+|  **** |  | advisor |
+|   |  | employee |
+|   |  | mentor |
+|   |  | supervisor |
+|   |  | manager |
+|   |  | colleage |
+|   |  | customer |
+|   |  | client |
+|   |  | supplier |
+|   |  | supplier |
+|   | **event** | meeting |
+|   |  | comference |
+|   |  | orientation |
+|   |  | training |
+|   |  | interview |
+|  **** | **award** | raise |
+|   |  | promotion |
+|   |  | bonus |
+|   | **punishment** | fired |
+|   |  | leave |
+|   |  | terminated |
+|  **reading** | **book** | title |
+|   |  | author |
+|   |  | character |
+|   |  | plot |
+|  **friends** | TBD | TBD |
 
 
 ## Example Dialogue Flow: Tone = Sadness:

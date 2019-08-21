@@ -150,6 +150,8 @@ def meeting_entity():
 def coworker_entity():
     yield "Why is your coworker hard to deal with?"
     yield "Does he ever try to come to a middle ground?"
+    yield "I'm so sorry. I'm sure if you talk to someone higher up, things will get better."
+    yield "Any time. I'm always here for you."
 
 def reading_intent():
     yield "Oh, what book did you read?"
@@ -320,6 +322,7 @@ def main():
                                                 try:
                                                     get_nao_response(next(res_coworker))
                                                 except StopIteration:
+                                                    #break
                                                     pass
                                     except:
                                         traceback.print_exc()

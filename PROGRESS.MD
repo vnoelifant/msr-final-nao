@@ -259,6 +259,39 @@ catch index error and print results. Write pseudocode in functions first. Fill i
         * Look into capabilities of RASA Python dialogue framework
   
   * ### **8/14/19 Meeting Minutes**:
+    * Discussed approach for integrating intents, intities, and tone
+      * Each is like an independent tree
+    * Discussed approach for building emotion tree in dialogue flow
+      * Direct/end conversation if emotion passed a certain threshold
+    * Discussed ideas on maintaining the intents/entities in main thread
+    * Work on building intent/entity tree, and then adding in the tone
+   
+* ## **Week 8/19/19 Goals**
+  * Build up intent/entity dialogue flow, and maintain state in main thread
+  * Build emotion tree based on emotion threshold
+
+  * ### **8/21 Meeting Agenda**:
+    * #### Accomplishments
+      * Updated dialogue flow to maintain states of intents and entities for any givien 
+      initial detected intent.
+        * Tested intents:
+          * work
+        * Tested with success on Nao. See demo below!
+          * Nao detects work intent and meeting, coworker entities, demo here:
+               [![IMAGE ALT TEXT](http://img.youtube.com/vi/YHhMOsL8Sv8/0.jpg)](http://www.youtube.com/watch?v=YHhMOsL8Sv8 "Nao Detects Work Intent and Entities")
+      * Updated list of intents and entities 
+
+
+    * #### Issues
+
+    * #### TODO
+      * Outline integration of tone score and confidence logic for tone detection
+      * Code how to end conversation
+      * Add more intents/entities to other daily activity options, ex: Social/Friends
+      * Research more intelligent response methods
+      
+  
+  * ### **8/21/19 Meeting Minutes**:
     
 
 
