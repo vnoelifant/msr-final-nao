@@ -280,6 +280,9 @@ catch index error and print results. Write pseudocode in functions first. Fill i
           * Nao detects work intent and meeting, coworker entities, demo here:
                [![IMAGE ALT TEXT](http://img.youtube.com/vi/YHhMOsL8Sv8/0.jpg)](http://www.youtube.com/watch?v=YHhMOsL8Sv8 "Nao Detects Work Intent and Entities")
       * Updated list of intents and entities 
+      * Wrote daily activity dialogue flows on scratch paper
+        * Includes highlightes of only intents/entities
+        * Need to add in the tone portion
 
 
     * #### Issues
