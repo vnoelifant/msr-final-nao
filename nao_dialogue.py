@@ -228,8 +228,6 @@ def main():
     # subscribe to Naoqi and begin recording speech
     SoundReceiver.start_recording() 
 
-   
- 
     try:
         # waiting while recording in progress
         
@@ -244,6 +242,7 @@ def main():
             res_coworker = coworker_entity()
             intent_list = []
             entity_list = []
+            keep_entity = True
             
             while True:
                 if SoundReceiver.recording == False:   
@@ -310,11 +309,12 @@ def main():
                                                 try:
                                                     get_nao_response(next(res_meeting))
                                                 except StopIteration:
+                                                    entity_list,entity_response = get_entity_response(user_speech_text) 
                                                     entity_list[0] = entity_response['entities'][0]['value']
                                                     print "new entity",entity_list[0]
                                                     pass 
 
-                                            elif entity_list[0] == "coworker":
+                                            if entity_list[0] == "coworker":
                                                 print "detected coworker entity"
                                                 print "first detected entity from list",entity_list[0]
                                                 try:
