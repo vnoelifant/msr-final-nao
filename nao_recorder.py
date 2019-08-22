@@ -110,7 +110,7 @@ class SoundReceiverModule(ALModule):
         nDeinterleave = 0;
         self.nSampleRate = 48000;
         self.CHUNK = 4096
-        self.PADDING = 3
+        self.PADDING = 5 #3
         self.threshold = 5000
         self.maximum = 16384
         self.sub_chunk = self.nSampleRate/self.CHUNK 
@@ -176,7 +176,7 @@ class SoundReceiverModule(ALModule):
 
         # add audio data to speech buffer if sound data over threshold
         if sound_detected:
-            print "detected sound"
+            #print "detected sound"
             self.num_silence = 0
             #print self.num_silence
             if not self.recording_in_progress:
@@ -198,7 +198,7 @@ class SoundReceiverModule(ALModule):
         # add sound data to silence padding to be prepended and appended to 
         # speech data
         else:
-            print "sound not over threshold and adding to silence padding buffer"
+            #print "sound not over threshold and adding to silence padding buffer"
             self.num_silence += 1
             self.padding.extend(self.audioBuffer)
 
@@ -209,7 +209,7 @@ class SoundReceiverModule(ALModule):
 
     def is_speech_detected(self):
         "Returns 'True' if speech is detected"
-        return  self.recording_in_progress == True and self.num_silence >= 30
+        return  self.recording_in_progress == True and self.num_silence >= 30 # 30 before
     
     def avg_volume(self):
         print "average the volume"

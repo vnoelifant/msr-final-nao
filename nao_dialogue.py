@@ -52,14 +52,14 @@ tone_analyzer = ToneAnalyzerV3(
 # to retrieve intents, user examples, entities from Watson Assistant
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
-# conainer for tone history
-tone_hist = []
+# # conainer for tone history
+# tone_hist = []
 
 # container for intent history
-intent_list = []
+intent_state = ""
 
 # container for entity history
-entity_list = []
+entity_state = ""
 
 # if set to true, stores initial intent for each user utterance to maintain same intent
 # if set to false,initial intent is not stored and intent detection is random
@@ -74,11 +74,12 @@ keep_entity = True
 # get the current tone from tone analyzer service
 # append tone and tone score to dictionary to maintain tone history
 # get Nao response according to tone and intent conditions
-def analyze_tone(user_speech_text):
-    tone_analysis = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
-    print(json.dumps(tone_analysis, indent=2)) 
-    detected_emotion, tone_hist = get_top_emo(user_input_text, tone_analysis)
-    return detected_emotion, tone_hist
+# def analyze_tone(user_speech_text):
+#     tone_analysis = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
+#     print(json.dumps(tone_analysis, indent=2)) 
+#     detected_emotion, tone_hist = get_top_emo(user_input_text, tone_analysis)
+#     #return detected_emotion, tone_hist
+#     return detected_emotion
 
 # convert text to speech via Nao TTS
 def get_nao_response(nao_text):
@@ -102,13 +103,16 @@ def transcribe_audio(path_to_audio_file):
             ).get_result()
 
 # get the top emotion
-def get_top_emo(user_speech_text,tone_analysis):
+def get_top_emo(user_speech_text):
     
     # initialize emotion data
     max_score = 0.0
     top_emotion = None
     top_emo_score = None
-    
+
+    tone_analysis = tone_analyzer.tone(tone_input=user_speech_text['input'], content_type='application/json').get_result()
+    #print "tone response",json.dumps(tone_analysis, indent=2)
+
     # create dictionary of tones
     tone_dict = tone_analysis['document_tone']['tones']
     
@@ -128,15 +132,16 @@ def get_top_emo(user_speech_text,tone_analysis):
         # update tone_response emotion tone
         tone_analysis['document_tone']['tones'][0]['tone_name'] = top_emotion
         tone_analysis['document_tone']['tones'][0]['score'] = top_emo_score
-        print "updated tone analysis", tone_analysis
+        #print "updated tone analysis", tone_analysis
 
-        # append tone and tone score to tone history list
-        tone_hist.append({
-                    'tone_name': top_emotion,
-                    'score': top_emo_score
-         })
+        # # append tone and tone score to tone history list
+        # tone_hist.append({
+        #             'tone_name': top_emotion,
+        #             'score': top_emo_score
+        #  })
  
-    return top_emotion, tone_hist
+    #return top_emotion, tone_hist
+    return top_emotion, top_emo_score
 
 # list of responses from nao for work intent
 def work_intent():
@@ -167,11 +172,9 @@ def get_intent_response(user_speech_text):
                                     ).get_result()
     print "response with detected intent"
     print(json.dumps(intent_response, indent=2))
-    intent = intent_response['intents'][0]['intent']
-    intent_list.append(intent)
-
-    
-    return intent_list,intent_response
+    intent_state = intent_response['intents'][0]['intent']
+  
+    return intent_state,intent_response
 
 def get_entity_response(user_speech_text):
 
@@ -180,10 +183,10 @@ def get_entity_response(user_speech_text):
                                     ).get_result()
     print "response with detected entity"
     print(json.dumps(entity_response, indent=2))
-    entity = entity_response['entities'][0]['value']
-    entity_list.append(entity)
+    entity_state = entity_response['entities'][0]['value']
+    #entity_state.append(entity)
 
-    return entity_list,entity_response
+    return entity_state,entity_response
  
 
 
@@ -242,17 +245,20 @@ def main():
             res_reading = reading_intent()
             res_friends = friends_intent()
             res_coworker = coworker_entity()
-            intent_list = []
-            entity_list = []
+            intent_state = ""
+            entity_state = ""
+            top_emotion = ""
+            top_emo_score = ""
             keep_entity = True
+            keep_intent = True
             
             while True:
                 if SoundReceiver.recording == False:   
                     print "SoundReceiver.recording detected as False, transcribe"
                     print "stopped recording, ready to transcribe"
                     print "recorder loop count: ",loop_count
-                    print "len intent", len(intent_list), intent_list
-                    print "len entity", len(entity_list), entity_list
+                    print "len intent", intent_state
+                    print "len entity", entity_state
                     print "keep intent", keep_intent
                     print "keep entity", keep_entity
                     
@@ -272,6 +278,8 @@ def main():
                         # TODO: Update tone analyzer conditional logic
                         # send user_speech_text to Watson Tone Analyzer to be analyzed for tone
                         # detected_emotion, tone_hist = analyze_tone(user_speech_text)
+                        top_emotion,top_emo_score = get_top_emo(user_speech_text)
+                        print "emotion",top_emotion,top_emo_score
                     
                         # send user_speech_text to Watson Assistant to be analyzed for intents and entities 
                         # dialogue flow is based on intents,entities (maintained or not maintained), and tone
@@ -279,15 +287,19 @@ def main():
                             # dialogue flow based on first detected intent maintained 
                             # throughout conversation turn or not maintained
                             # TODO: Add tone analysis
+                            #top_emotion,top_emo_score = get_top_emo(user_speech_text)
+                            #print "emotion",top_emotion,top_emo_score
                             if keep_intent:
-                                if len(intent_list) > 0:
+                                if intent_state:
                                     pass
                                 else:
                                     print "len of intent list not greater than 0"
-                                    intent_list,intent_response = get_intent_response(user_speech_text) 
+                                    intent_state,intent_response = get_intent_response(user_speech_text) 
+                                    # top_emotion,top_emo_score = get_top_emo(user_speech_text)
 
-                                print "first detected intent from intent list: ",intent_list[0]
-                                if intent_list[0] == "work":
+                                print "first detected intent from intent list: ",intent_state
+                                #print "emotion",top_emotion,top_emo_score
+                                if intent_state == "work":
                                     print "detected work convo"
                                     try:
                                         print "responding to initial work intent"
@@ -297,58 +309,68 @@ def main():
                                    
                                     try:
                                         if keep_entity:
-                                            if len(entity_list) > 0:
+                                            if entity_state:
                                                  pass
                                             else:
                                                 print "calling entity response function"
-                                                entity_list,entity_response = get_entity_response(user_speech_text)   
+                                                entity_state,entity_response = get_entity_response(user_speech_text)
+                                                # top_emotion,top_emo_score = get_top_emo(user_speech_text)   
                                            
-                                            print "first detected entity from list",entity_list[0] 
+                                            print "first detected entity from list",entity_state 
                                             
-                                            if entity_list[0] == "meeting":
+                                            if entity_state == "meeting":
                                                 print "detected meeting entity"
-                                                print "first detected entity from list",entity_list[0]
+                                                print "first detected entity from list",entity_state
+                                                #print "emotion",top_emotion,top_emo_score
                                                 
                                                 try:
                                                     get_nao_response(next(res_meeting))
                                                 except StopIteration:
-                                                    entity_list,entity_response = get_entity_response(user_speech_text) 
-                                                    entity_list[0] = entity_response['entities'][0]['value']
-                                                    print "new entity",entity_list[0]
+                                                    entity_state,entity_response = get_entity_response(user_speech_text) 
+                                                    # top_emotion,top_emo_score = get_top_emo(user_speech_text) 
+                                                    entity_state = entity_response['entities'][0]['value']
+                                                    print "new entity",entity_state
+                                                    # print "emotion",top_emotion,top_emo_score
                                                     pass 
 
-                                            if entity_list[0] == "coworker":
+                                            if entity_state == "coworker":
                                                 print "detected coworker entity"
-                                                print "first detected entity from list",entity_list[0]
+                                                print "first detected entity from list",entity_state
                                                 try:
                                                     get_nao_response(next(res_coworker))
                                                 except StopIteration:
-                                                    #break
                                                     pass
                                     except:
                                         traceback.print_exc()
-                                        print "can't find entity, go on"
+                                        print "can't find entity"
                                         pass
+                                
                                 # TODO: Add reading entities and tone analysis
-                                elif intent_list[0]  == "reading":
+                                elif intent_state  == "reading":
                                     try:
                                         print "detected reading convo"
-                                        print(next(res_reading))
-                                except StopIteration:
-                                    pass
+                                        get_nao_response(next(res_reading))
+                                    except StopIteration:
+                                        pass
                                 
                                 # TODO: Add friends entities and tone analysis
-                                elif intent_list[0] == "friends":
+                                elif intent_state == "friends":
                                     try:
                                         print "detected friends convo"
-                                        print(next(res_friends))
+                                        get_nao_response(next(res_friends))
                                     except StopIteration:
                                         pass
 
-                            else:
+                            elif not keep_intent:
                                 # TODO: add more conditional code here to redirect conversation not based on 
                                 # maintained initial intent
                                 print "Just getting a random response, not in intent flow"
+                                get_nao_response("you do not want to maintain state") 
+                                intent_state,intent_response = get_intent_response(user_speech_text)
+                                print "intent response",intent_response
+                                # entity_state,entity_response = get_entity_response(user_speech_text) 
+                                # top_emotion,top_emo_score = get_top_emo(user_speech_text)
+                                # print "emotion",top_emotion,top_emo_score
                                 pass
 
                         except:
