@@ -145,18 +145,55 @@ def get_top_emo(user_speech_text):
 
 # list of responses from nao for work intent
 def work_intent():
-    yield "Oh, how was work?"
+    yield "Oh, what did you do at work?"
 
-def meeting_entity():
-    yield "Ah. how were the meetings?"
-    yield "Oh no, do you want to talk about it?"
-    yield "Aw, what was bothering you?"
+def meeting_entity(top_emotion = "",top_emo_score = ""):
+    if top_emotion and top_emo_score:
+        print "detected emotion yessssssssss"
+        if top_emotion == "sadness" and top_emo_score >= 0.75:
+            yield "Oh, You sound sad, what happened at the meeting?" 
+        elif top_emotion == "confident" and top_emo_score >= 0.75:
+            yield "Oh you sound confident"
+        elif top_emotion == "fear" and top_emo_score >= 0.75:
+            yield "Oh you sound scared what happened at the meeting?" 
+        elif top_emotion == "analytical" and top_emo_score >= 0.75:
+            yield "Oh you sound analytical"
+        elif top_emotion == "joy" and top_emo_score >= 0.75:
+            yield "Oh you sound happy"
+        elif top_emotion == "tentative" and top_emo_score >= 0.75:
+            yield "Oh you sound tentative"
+        elif top_emotion == "anger" and top_emo_score >= 0.75:
+            yield "Oh you sound angry what happened at the meeting?"
+        else:
+            yield "I think you are feeling: ",top_emotion
+    else:
+        yield "Ah. What was discussed at the meeting?"
 
-def coworker_entity():
-    yield "Why is your coworker hard to deal with?"
-    yield "Does he ever try to come to a middle ground?"
-    yield "I'm so sorry. I'm sure if you talk to someone higher up, things will get better."
-    yield "Any time. I'm always here for you."
+def coworker_entity(top_emotion = "",top_emo_score = ""):
+    if top_emotion and top_emo_score:
+        print "detected emotion yessssssssss"
+        if top_emotion == "sadness" and top_emo_score >= 0.75:
+            yield "I'm so sorry. I'm sure if you talk to someone higher up, things will get better."
+        elif top_emotion == "confident" and top_emo_score >= 0.75:
+            yield "Oh you sound confident, Why is your coworker hard to deal with?"
+            yield "Aw, does he ever try to come to a middle ground at least?"
+        elif top_emotion == "fear" and top_emo_score >= 0.75:
+            yield "Oh you sound scared, Why is your coworker hard to deal with?"
+        elif top_emotion == "analytical" and top_emo_score >= 0.75:
+            yield "Oh you sound analytical, Why is your coworker hard to deal with?"
+            yield "Aw, does he ever try to come to a middle ground at least?"
+        elif top_emotion == "joy" and top_emo_score >= 0.75:
+            yield "Any time. I'm always here for you."
+        elif top_emotion == "tentative" and top_emo_score >= 0.75:
+            yield "Oh you sound tentative, Why is your coworker hard to deal with?"
+            yield "Aw, does he ever try to come to a middle ground at least?"
+        elif top_emotion == "anger" and top_emo_score >= 0.75:
+            yield "Oh you sound angry, Why is your coworker hard to deal with?"
+        else:
+            yield "I think you are feeling: ",top_emotion
+    else:
+        yield "Why is your coworker hard to deal with?"
+        yield "Aw, does he ever try to come to a middle ground at least?"
 
 def reading_intent():
     yield "Oh, what book did you read?"
@@ -167,26 +204,35 @@ def friends_intent():
     yield "Oh,what did you all do?"
 
 def get_intent_response(user_speech_text):
+
     intent_response = assistant.message(workspace_id=workspace_id,
                                      input=user_speech_text['input'],
                                     ).get_result()
-    print "response with detected intent"
-    print(json.dumps(intent_response, indent=2))
-    intent_state = intent_response['intents'][0]['intent']
-  
-    return intent_state,intent_response
+    
+    if intent_response['intents'][0]['confidence'] > 0.5:
+        intent_state = intent_response['intents'][0]['intent']
+        print "response with detected intent"
+        print(json.dumps(intent_response, indent=2))
+        return intent_state,intent_response
 
-def get_entity_response(user_speech_text):
+    return None,None
 
+def get_entity_response(user_speech_text,intent_state = ""):
+    print "intent state for entity",intent_state
     entity_response = assistant.message(workspace_id=workspace_id,
                                      input=user_speech_text['input'],
                                     ).get_result()
-    print "response with detected entity"
-    print(json.dumps(entity_response, indent=2))
-    entity_state = entity_response['entities'][0]['value']
-    #entity_state.append(entity)
-
-    return entity_state,entity_response
+    if intent_state:
+        print "found intent for entity"
+        entity_response['intents'][0]['intent'] = intent_state
+        entity_response['intents'][0]['confidence'] = None
+    
+        print "response with detected entity"
+        print(json.dumps(entity_response, indent=2))
+        entity_state = entity_response['entities'][0]['value']
+        return entity_state,entity_response
+  
+    return None,None
  
 
 
@@ -304,6 +350,7 @@ def main():
                                     try:
                                         print "responding to initial work intent"
                                         get_nao_response(next(res_work))
+                                        #keep_intent = False # test to transition to different intent
                                     except StopIteration:
                                         pass
                                    
@@ -313,25 +360,23 @@ def main():
                                                  pass
                                             else:
                                                 print "calling entity response function"
-                                                entity_state,entity_response = get_entity_response(user_speech_text)
+                                                entity_state,entity_response = get_entity_response(user_speech_text,intent_state)
                                                 # top_emotion,top_emo_score = get_top_emo(user_speech_text)   
-                                           
-                                            print "first detected entity from list",entity_state 
+                                            print "first detected entity",entity_state 
                                             
                                             if entity_state == "meeting":
                                                 print "detected meeting entity"
-                                                print "first detected entity from list",entity_state
-                                                #print "emotion",top_emotion,top_emo_score
-                                                
                                                 try:
-                                                    get_nao_response(next(res_meeting))
-                                                except StopIteration:
-                                                    entity_state,entity_response = get_entity_response(user_speech_text) 
-                                                    # top_emotion,top_emo_score = get_top_emo(user_speech_text) 
-                                                    entity_state = entity_response['entities'][0]['value']
-                                                    print "new entity",entity_state
-                                                    # print "emotion",top_emotion,top_emo_score
-                                                    pass 
+                                                    print(next(res_meeting))
+                                                except StopIteration: 
+                                                    pass
+                                                if top_emotion and top_emo_score != None:
+                                                    res_meeting = meeting_entity(top_emotion,top_emo_score)
+                                                    try:
+                                                        print(next(res_meeting))
+                                                        keep_entity = False
+                                                    except StopIteration:
+                                                        pass
 
                                             if entity_state == "coworker":
                                                 print "detected coworker entity"
