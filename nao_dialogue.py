@@ -52,9 +52,6 @@ tone_analyzer = ToneAnalyzerV3(
 # to retrieve intents, user examples, entities from Watson Assistant
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
-# # conainer for tone history
-# tone_hist = []
-
 # container for intent history
 intent_state = ""
 
@@ -69,17 +66,25 @@ keep_intent = True
 # if set to false,initial entity is not stored and entity detection is random
 keep_entity = True
 
-# create Watson Assistant dialogue logic:
-# call the Watson Tone analyzer service
-# get the current tone from tone analyzer service
-# append tone and tone score to dictionary to maintain tone history
-# get Nao response according to tone and intent conditions
-# def analyze_tone(user_speech_text):
-#     tone_analysis = tone_analyzer.tone(tone_input=user_input_text['input'], content_type='application/json').get_result()
-#     print(json.dumps(tone_analysis, indent=2)) 
-#     detected_emotion, tone_hist = get_top_emo(user_input_text, tone_analysis)
-#     #return detected_emotion, tone_hist
-#     return detected_emotion
+# list of possible tones
+emotions = ['sadness','joy','anger','confident','tentative','analytical','fear']
+
+# list of possible tone responses per entity
+# TODO: Update string responses 
+emo_res_list = [{'meeting':["Oh, You sound sad meeting","Oh, You sound sad again meeting"],
+    'coworker':["Oh, You sound sad coworker","Oh, You sound sad again coworker"]},
+    {'meeting':["Oh, You sound happy meeting","Oh, You sound happy again meeting"],
+    'coworker':["Oh, You sound happy coworker","Oh, You sound happy again coworker"]},
+    {'meeting':["Oh, You sound angry meeting","Oh, You sound angry again meeting"],
+    'coworker':["Oh, You sound angry coworker","Oh, You sound angry again coworker"]},
+    {'meeting':["Oh, You sound confident meeting","Oh, You sound confident again meeting"],
+    'coworker':["Oh, You sound confident coworker","Oh, You sound confident again coworker"]},
+    {'meeting':["Oh, You sound tentative meeting","Oh, You sound tentative again meeting"],
+    'coworker':["Oh, You sound tentative coworker","Oh, You sound tentative coworker"]},
+    {'meeting':["Oh, You sound analytical meeting","Oh, You sound analytical again meeting"],
+    'coworker':["Oh, You sound analytical coworker","Oh, You sound analytical again coworker"]},
+    {'meeting':["Oh, You sound scared meeting","Oh, You sound scared again meeting"],
+    'coworker':["Oh, You sound scared coworker","Oh, You sound scared coworker"]}]
 
 # convert text to speech via Nao TTS
 def get_nao_response(nao_text):
@@ -147,52 +152,19 @@ def get_top_emo(user_speech_text):
 def work_intent():
     yield "Oh, what did you do at work?"
 
-def meeting_entity(top_emotion = "",top_emo_score = "",entity_state = ""):
-    print "at the meeting dialogue branch"
-    if top_emotion and top_emo_score and entity_state:
-        print "detected emotion yessssssssss"
-        if top_emotion == "sadness" and top_emo_score >= 0.75:
-            yield "Oh, You sound ",top_emotion, ". What happened at the ",entity_state,"?" 
-        elif top_emotion == "confident" and top_emo_score >= 0.75:
-            yield "I see. What happened at the ",entity_state,"?" 
-        elif top_emotion == "fear" and top_emo_score >= 0.75:
-            yield "Oh, You sound ",top_emotion, ". What happened at the ",entity_state,"?" 
-        elif top_emotion == "analytical" and top_emo_score >= 0.75:
-            yield "I see. What happened at the ",entity_state, "?"  
-        elif top_emotion == "joy" and top_emo_score >= 0.75:
-            yield "It sounds like you are ",top_emotion, ".Yay! Sounds like the ",entity_state, "went well!"
-        elif top_emotion == "tentative" and top_emo_score >= 0.75:
-            yield "Oh, You sound ",top_emotion, ". I'd love to offer some advice. What happened at the meeting?" 
-        elif top_emotion == "anger" and top_emo_score >= 0.75:
-            yield "I'm sorry you sound ",top_emotion, ". What happened at the ",entity_state,"?" 
-        else:
-            yield "I think you are feeling: ",top_emotion, ".Can you please clarify that again?"
-    else:
-        yield "Ah. How was the ",entity_state,"?"
+def meeting_entity():
+    yield "Oh, how was the meeting?"
 
+def coworker_entity():
+    yield "Oh, what was wrong with the coworker?"
 
-def coworker_entity(top_emotion = "",top_emo_score = "",entity_state = ""):
-    print "at the coworker dialogue branch"
-    if top_emotion and top_emo_score and entity_state:
-        print "detected emotion yessssssssss"
-        if top_emotion == "sadness" and top_emo_score >= 0.75:
-            yield "I'm so sorry your your ",entity_state, "has caused you ",top_emotion,". I'm sure if you talk to someone higher up, things will get better."
-        elif top_emotion == "confident" and top_emo_score >= 0.75:
-            yield "Aw, does your ",entity_state, "ever try to come to a middle ground at least?"
-        elif top_emotion == "fear" and top_emo_score >= 0.75:
-            yield "I'm sorry you feel ",top_emotion,". Does your ",entity_state, "try to come to a middle ground at least?"
-        elif top_emotion == "analytical" and top_emo_score >= 0.75:
-            yield "Hmmm, does your ",entity_state, "ever try to come to a middle ground at least?"
-        elif top_emotion == "joy" and top_emo_score >= 0.75:
-            yield "I am glad you sound ",top_emotion," now. I'm always here for you."
-        elif top_emotion == "tentative" and top_emo_score >= 0.75:
-            yield "You sound ",top_emotion," .Let me help you here. Does your ",entity_state, "ever try to come to a middle ground at least?"
-        elif top_emotion == "anger" and top_emo_score >= 0.75:
-            yield "I'm sorry you feel ",top_emotion,". Does your ",entity_state, "ever try to come to a middle ground at least?"
-        else:
-            yield "I think you are feeling: ",top_emotion,"can you please clarify that again?"
-    else:
-        yield "Why is your your ",entity_state, "hard to deal with?"
+def emo_response(top_emotion,top_emo_score,entity_state,emotions,emo_res_list):
+    print "At the emo dialogue branch"
+    if top_emo_score >= 0.75:
+        for emo,response_list in zip(emotions,emo_res_list):
+            if emo == top_emotion:
+                for response in response_list[entity_state]:
+                    yield response
 
 def reading_intent():
     yield "Oh, what book did you read?"
@@ -370,11 +342,11 @@ def main():
                                                 except StopIteration: 
                                                     pass
                                                 if top_emotion and top_emo_score != None:
-                                                    res_meeting = meeting_entity(top_emotion,top_emo_score,entity_state)
+                                                    emo = emo_response(top_emotion,top_emo_score,entity_state,emotions,emo_res_list)
                                                     try:
-                                                        print(next(res_meeting))
+                                                        print next(emo)
                                                         keep_entity = False
-                                                    except StopIteration:
+                                                    except StopIteration: 
                                                         pass
 
                                             if entity_state == "coworker":
@@ -384,12 +356,14 @@ def main():
                                                     get_nao_response(next(res_coworker))
                                                 except StopIteration:
                                                     pass
+                                                
                                                 if top_emotion and top_emo_score != None:
-                                                    res_coworker = coworker_entity(top_emotion,top_emo_score,entity_state)
+                                                   emo = emo_response(top_emotion,top_emo_score,entity_state,emotions,emo_res_list)
                                                     try:
-                                                        print next(res_coworker)
-                                                    except StopIteration:
+                                                        print next(emo)
+                                                    except StopIteration: 
                                                         pass
+                                        
                                         elif not keep_entity:
                                             entity_state,entity_response = get_entity_response(input_text,intent_state)
                                             print "new entity",entity_state
