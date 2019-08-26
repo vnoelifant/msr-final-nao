@@ -147,53 +147,52 @@ def get_top_emo(user_speech_text):
 def work_intent():
     yield "Oh, what did you do at work?"
 
-def meeting_entity(top_emotion = "",top_emo_score = ""):
-    if top_emotion and top_emo_score:
+def meeting_entity(top_emotion = "",top_emo_score = "",entity_state = ""):
+    print "at the meeting dialogue branch"
+    if top_emotion and top_emo_score and entity_state:
         print "detected emotion yessssssssss"
         if top_emotion == "sadness" and top_emo_score >= 0.75:
-            yield "Oh, You sound sad, what happened at the meeting?" 
+            yield "Oh, You sound ",top_emotion, ". What happened at the ",entity_state,"?" 
         elif top_emotion == "confident" and top_emo_score >= 0.75:
-            yield "Oh you sound confident"
+            yield "I see. What happened at the ",entity_state,"?" 
         elif top_emotion == "fear" and top_emo_score >= 0.75:
-            yield "Oh you sound scared what happened at the meeting?" 
+            yield "Oh, You sound ",top_emotion, ". What happened at the ",entity_state,"?" 
         elif top_emotion == "analytical" and top_emo_score >= 0.75:
-            yield "Oh you sound analytical"
+            yield "I see. What happened at the ",entity_state, "?"  
         elif top_emotion == "joy" and top_emo_score >= 0.75:
-            yield "Oh you sound happy"
+            yield "It sounds like you are ",top_emotion, ".Yay! Sounds like the ",entity_state, "went well!"
         elif top_emotion == "tentative" and top_emo_score >= 0.75:
-            yield "Oh you sound tentative"
+            yield "Oh, You sound ",top_emotion, ". I'd love to offer some advice. What happened at the meeting?" 
         elif top_emotion == "anger" and top_emo_score >= 0.75:
-            yield "Oh you sound angry what happened at the meeting?"
+            yield "I'm sorry you sound ",top_emotion, ". What happened at the ",entity_state,"?" 
         else:
-            yield "I think you are feeling: ",top_emotion
+            yield "I think you are feeling: ",top_emotion, ".Can you please clarify that again?"
     else:
-        yield "Ah. What was discussed at the meeting?"
+        yield "Ah. How was the ",entity_state,"?"
 
-def coworker_entity(top_emotion = "",top_emo_score = ""):
-    if top_emotion and top_emo_score:
+
+def coworker_entity(top_emotion = "",top_emo_score = "",entity_state = ""):
+    print "at the coworker dialogue branch"
+    if top_emotion and top_emo_score and entity_state:
         print "detected emotion yessssssssss"
         if top_emotion == "sadness" and top_emo_score >= 0.75:
-            yield "I'm so sorry. I'm sure if you talk to someone higher up, things will get better."
+            yield "I'm so sorry your your ",entity_state, "has caused you ",top_emotion,". I'm sure if you talk to someone higher up, things will get better."
         elif top_emotion == "confident" and top_emo_score >= 0.75:
-            yield "Oh you sound confident, Why is your coworker hard to deal with?"
-            yield "Aw, does he ever try to come to a middle ground at least?"
+            yield "Aw, does your ",entity_state, "ever try to come to a middle ground at least?"
         elif top_emotion == "fear" and top_emo_score >= 0.75:
-            yield "Oh you sound scared, Why is your coworker hard to deal with?"
+            yield "I'm sorry you feel ",top_emotion,". Does your ",entity_state, "try to come to a middle ground at least?"
         elif top_emotion == "analytical" and top_emo_score >= 0.75:
-            yield "Oh you sound analytical, Why is your coworker hard to deal with?"
-            yield "Aw, does he ever try to come to a middle ground at least?"
+            yield "Hmmm, does your ",entity_state, "ever try to come to a middle ground at least?"
         elif top_emotion == "joy" and top_emo_score >= 0.75:
-            yield "Any time. I'm always here for you."
+            yield "I am glad you sound ",top_emotion," now. I'm always here for you."
         elif top_emotion == "tentative" and top_emo_score >= 0.75:
-            yield "Oh you sound tentative, Why is your coworker hard to deal with?"
-            yield "Aw, does he ever try to come to a middle ground at least?"
+            yield "You sound ",top_emotion," .Let me help you here. Does your ",entity_state, "ever try to come to a middle ground at least?"
         elif top_emotion == "anger" and top_emo_score >= 0.75:
-            yield "Oh you sound angry, Why is your coworker hard to deal with?"
+            yield "I'm sorry you feel ",top_emotion,". Does your ",entity_state, "ever try to come to a middle ground at least?"
         else:
-            yield "I think you are feeling: ",top_emotion
+            yield "I think you are feeling: ",top_emotion,"can you please clarify that again?"
     else:
-        yield "Why is your coworker hard to deal with?"
-        yield "Aw, does he ever try to come to a middle ground at least?"
+        yield "Why is your your ",entity_state, "hard to deal with?"
 
 def reading_intent():
     yield "Oh, what book did you read?"
@@ -371,7 +370,7 @@ def main():
                                                 except StopIteration: 
                                                     pass
                                                 if top_emotion and top_emo_score != None:
-                                                    res_meeting = meeting_entity(top_emotion,top_emo_score)
+                                                    res_meeting = meeting_entity(top_emotion,top_emo_score,entity_state)
                                                     try:
                                                         print(next(res_meeting))
                                                         keep_entity = False
@@ -385,6 +384,17 @@ def main():
                                                     get_nao_response(next(res_coworker))
                                                 except StopIteration:
                                                     pass
+                                                if top_emotion and top_emo_score != None:
+                                                    res_coworker = coworker_entity(top_emotion,top_emo_score,entity_state)
+                                                    try:
+                                                        print next(res_coworker)
+                                                    except StopIteration:
+                                                        pass
+                                        elif not keep_entity:
+                                            entity_state,entity_response = get_entity_response(input_text,intent_state)
+                                            print "new entity",entity_state
+                                            keep_entity = True
+                                            continue  
                                     except:
                                         traceback.print_exc()
                                         print "can't find entity"
@@ -430,16 +440,16 @@ def main():
                         traceback.print_exc()
                         print "try speaking again"
                         pass
-             
-                    print "resuming recording"
-                    loop_count += 1
-                    SoundReceiver.resume_recording()        
-    
+                   
     except KeyboardInterrupt:
         # closing
         myBroker.shutdown()
         print("disconnected")
         sys.exit(0)
+  
+    print "resuming recording"
+    loop_count += 1
+    SoundReceiver.resume_recording()  
 
 if __name__ == "__main__":
     main()
