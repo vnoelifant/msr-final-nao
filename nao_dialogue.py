@@ -323,6 +323,7 @@ def main():
                                                 except StopIteration: 
                                                     pass
 
+                                            # Nao tries to understand what your tone is for lower emotion score 
                                             elif top_emo_score >= 0.5 and top_emo_score < 0.75:
                                                 if "yes" in user_speech_text:
                                                     try:
