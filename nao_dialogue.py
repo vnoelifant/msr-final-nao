@@ -69,22 +69,31 @@ keep_entity = True
 # list of possible tones
 emotions = ['sadness','joy','anger','confident','tentative','analytical','fear']
 
-# list of possible tone responses per entity
+# list of possible tone responses per emotional state based on entity
 # TODO: Update string responses 
-emo_res_list = [{'meeting':["Oh, You sound sad meeting","Oh, You sound sad again meeting"],
-    'coworker':["Oh, You sound sad coworker","Oh, You sound sad again coworker"]},
+emo_list = [{'meeting':["Oh no, I am sorry, what happened at the meeting?","Oh, You sound sad again meeting"],
+    'coworker':["Oh, what bothered you about your coworker?","Oh, You sound sad again coworker"]},
     {'meeting':["Oh, You sound happy meeting","Oh, You sound happy again meeting"],
-    'coworker':["Oh, You sound happy coworker","Oh, You sound happy again coworker"]},
-    {'meeting':["Oh, You sound angry meeting","Oh, You sound angry again meeting"],
-    'coworker':["Oh, You sound angry coworker","Oh, You sound angry again coworker"]},
+    'coworker':["Good yo hear you sound happy. I'm always here for you.","Oh, You sound happy again coworker"]},
+    {'meeting':["Oh you sound a bit angry,I'm here to help you. What happened at the meeting?","Oh, You sound angry again meeting"],
+    'coworker':["Oh, Oh, what bothered you about your coworker?","Oh, You sound angry again coworker"]},
     {'meeting':["Oh, You sound confident meeting","Oh, You sound confident again meeting"],
-    'coworker':["Oh, You sound confident coworker","Oh, You sound confident again coworker"]},
-    {'meeting':["Oh, You sound tentative meeting","Oh, You sound tentative again meeting"],
-    'coworker':["Oh, You sound tentative coworker","Oh, You sound tentative coworker"]},
-    {'meeting':["Oh, You sound analytical meeting","Oh, You sound analytical again meeting"],
-    'coworker':["Oh, You sound analytical coworker","Oh, You sound analytical again coworker"]},
-    {'meeting':["Oh, You sound scared meeting","Oh, You sound scared again meeting"],
-    'coworker':["Oh, You sound scared coworker","Oh, You sound scared coworker"]}]
+    'coworker':["Oh, what bothered you about your coworker?","Oh, does he at least try to come up with a middle ground?"]},
+    {'meeting':["Oh, what bothered you about your coworker?","Oh, You sound tentative again meeting"],
+    'coworker':["Ah don't be tentative, I can help! What bothered you about your coworker?","Oh, You sound tentative coworker"]},
+    {'meeting':["Oh, does he at least try to come up with a middle ground?","Oh, You sound analytical again meeting"],
+    'coworker':["Oh, what bothered you about your coworker?","Oh, You sound analytical again coworker"]},
+    {'meeting':["Oh no, I am sorry, what happened at the meeting?","Oh, You sound scared again meeting"],
+    'coworker':["Oh don't be scared, what bothered you about your coworker?","Oh, You sound scared coworker"]}]
+
+# list of possible entity responses for unemotional user speech text
+ent_res_list = [{'meeting':["Oh, how was the meeting?"],
+    'coworker':["Oh, what bothered you about your coworker?"]}]
+
+# list of possible intent responses for unemotional user speech text
+int_res_list = [{'work':["What did you do at work?"],
+    'reading':["What book did you read?"],
+    'friends':["Which friend did you visit?"]}]
 
 # convert text to speech via Nao TTS
 def get_nao_response(nao_text):
@@ -148,15 +157,18 @@ def get_top_emo(user_speech_text):
     #return top_emotion, tone_hist
     return top_emotion, top_emo_score
 
-# list of responses from nao for work intent
-def work_intent():
-    yield "Oh, what did you do at work?"
+# list of responses from nao for intents, entities, and emotions
+def int_response(intent_state, int_res_list):
+    print "At the intent dialogue branch"
+    for response_list in int_res_list:
+        for response in response_list[intent_state]:
+            yield response
 
-def meeting_entity():
-    yield "Oh, how was the meeting?"
-
-def coworker_entity():
-    yield "Oh, what was wrong with the coworker?"
+def ent_response(entity_state,ent_res_list):
+    print "At the entity dialogue branch"
+    for response_list in ent_res_list:
+        for response in response_list[entity_state]:
+            yield response
 
 def emo_response(top_emotion,top_emo_score,entity_state,emotions,emo_res_list):
     print "At the emo dialogue branch"
@@ -292,7 +304,6 @@ def main():
                             }
                         } 
 
-                        # TODO: Update tone analyzer conditional logic
                         # send user_speech_text to Watson Tone Analyzer to be analyzed for tone
                         # detected_emotion, tone_hist = analyze_tone(user_speech_text)
                         top_emotion,top_emo_score = get_top_emo(user_speech_text)
@@ -303,92 +314,88 @@ def main():
                         try:
                             # dialogue flow based on first detected intent maintained 
                             # throughout conversation turn or not maintained
-                            # TODO: Add tone analysis
-                            #top_emotion,top_emo_score = get_top_emo(user_speech_text)
-                            #print "emotion",top_emotion,top_emo_score
                             if keep_intent:
                                 if intent_state:
                                     pass
                                 else:
-                                    print "len of intent list not greater than 0"
+                                    print "starting intent detection"
                                     intent_state,intent_response = get_intent_response(user_speech_text) 
-                                    # top_emotion,top_emo_score = get_top_emo(user_speech_text)
-
-                                print "first detected intent from intent list: ",intent_state
-                                #print "emotion",top_emotion,top_emo_score
-                                if intent_state == "work":
-                                    print "detected work convo"
+                                    res_intent = int_response(intent_state,int_res_list)
                                     try:
-                                        print "responding to initial work intent"
-                                        get_nao_response(next(res_work))
-                                        #keep_intent = False # test to transition to different intent
-                                    except StopIteration:
+                                        print(next(res_intent))
+                                    except StopIteration: 
                                         pass
-                                   
-                                    try:
-                                        if keep_entity:
-                                            if entity_state:
-                                                 pass
-                                            else:
-                                                print "calling entity response function"
-                                                entity_state,entity_response = get_entity_response(user_speech_text,intent_state)
-                                                # top_emotion,top_emo_score = get_top_emo(user_speech_text)   
-                                            print "first detected entity",entity_state 
-                                            
-                                            if entity_state == "meeting":
-                                                print "detected meeting entity"
+
+                                print "first detected intent: ",intent_state
+                                
+                                try:
+                                    if keep_entity:
+                                        if entity_state:
+                                            pass
+                                        else:
+                                            print "start entity detection"
+                                            entity_state,entity_response = get_entity_response(user_speech_text,intent_state)
+                                            print "detected entity",entity_state
+                                            res_ent = ent_response(entity_state,ent_res_list)
+                                            try:
+                                                print(next(res_ent))
+                                            except StopIteration: 
+                                                pass
+                                        if entity_state and top_emotion == None and top_emo_score == None:
+                                            try:
+                                                print(next(res_ent))
+                                            except StopIteration: 
+                                                pass
+                                        print "detected entity",entity_state
+                                        
+                                        if top_emotion and top_emo_score >= 0.75:
+                                            emo = emo_response(top_emotion,entity_state,emotions,emo_list)
+                                            try:
+                                                print next(emo)
+                                                if entity_state == "meeting":
+                                                    keep_entity = False
+                                            except StopIteration: 
+                                                pass
+
+                                        elif top_emo_score >= 0.5 and top_emo_score < 0.75:
+                                            #emo_check = res_emo_check(entity_state)
+                                            if "yes" in user_speech_text:
                                                 try:
-                                                    print(next(res_meeting))
+                                                    print(next(emo))
                                                 except StopIteration: 
                                                     pass
-                                                if top_emotion and top_emo_score != None:
-                                                    emo = emo_response(top_emotion,top_emo_score,entity_state,emotions,emo_res_list)
-                                                    try:
-                                                        print next(emo)
-                                                        keep_entity = False
-                                                    except StopIteration: 
-                                                        pass
-
-                                            if entity_state == "coworker":
-                                                print "detected coworker entity"
-                                                print "first detected entity from list",entity_state
+                                            else:
                                                 try:
-                                                    get_nao_response(next(res_coworker))
-                                                except StopIteration:
+                                                    print(next(res_emo_check))
+                                                except StopIteration: 
                                                     pass
-                                                
-                                                if top_emotion and top_emo_score != None:
-                                                   emo = emo_response(top_emotion,top_emo_score,entity_state,emotions,emo_res_list)
-                                                    try:
-                                                        print next(emo)
-                                                    except StopIteration: 
-                                                        pass
-                                        
-                                        elif not keep_entity:
-                                            entity_state,entity_response = get_entity_response(input_text,intent_state)
-                                            print "new entity",entity_state
-                                            keep_entity = True
-                                            continue  
-                                    except:
-                                        traceback.print_exc()
-                                        print "can't find entity"
-                                        pass
+                                        print "entity bool",keep_entity
                                 
-                                # TODO: Add reading entities and tone analysis
-                                elif intent_state  == "reading":
-                                    try:
-                                        print "detected reading convo"
-                                        get_nao_response(next(res_reading))
-                                    except StopIteration:
-                                        pass
+                                    elif not keep_entity:
+                                        entity_state,entity_response = get_entity_response(user_speech_text,intent_state)
+                                        print "new entity",entity_state
+                                        keep_entity = True
+                                        continue    
+                                except:
+                                    traceback.print_exc()
+                                    print "can't find entity, go on"
+                                    pass
+                        
+                                # # TODO: Add reading entities and tone analysis
+                                # elif intent_state  == "reading":
+                                #     try:
+                                #         print "detected reading convo"
+                                #         get_nao_response(next(res_reading))
+                                #     except StopIteration:
+                                #         pass
                                 
-                                # TODO: Add friends entities and tone analysis
-                                elif intent_state == "friends":
-                                    try:
-                                        print "detected friends convo"
-                                        get_nao_response(next(res_friends))
-                                    except StopIteration:
-                                        pass
+                                # # TODO: Add friends entities and tone analysis
+                                # elif intent_state == "friends":
+                                #     try:
+                                #         print "detected friends convo"
+                                #         get_nao_response(next(res_friends))
+                                #     except StopIteration:
+                                #         pass
 
                             elif not keep_intent:
                                 # TODO: add more conditional code here to redirect conversation not based on 
