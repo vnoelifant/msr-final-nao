@@ -170,7 +170,7 @@ def ent_response(entity_state,ent_res_list):
         for response in response_list[entity_state]:
             yield response
 
-def emo_response(top_emotion,top_emo_score,entity_state,emotions,emo_res_list):
+def emo_response(top_emotion,entity_state,emotions,emo_res_list):
     print "At the emo dialogue branch"
     if top_emo_score >= 0.75:
         for emo,response_list in zip(emotions,emo_res_list):
@@ -269,27 +269,28 @@ def main():
         while True:
             time.sleep(1)
 
-            if SoundReceiver.recording == False: 
+            #if SoundReceiver.recording == False: 
                 #while True:
                     # if SoundReceiver.recording == False:   
-                print "stopped recording, ready to transcribe"
-                   
-                # initialize dialogue settings
-                res_emo_check = emo_check()
-                intent_state = ""
-                entity_state = ""
-                top_emotion = ""
-                top_emo_score = ""
-                keep_entity = True
-                keep_intent = True
-                start_dialogue = False
-                loop_count = 0
-                print "len intent", intent_state
-                print "len entity", entity_state
-                print "keep intent", keep_intent
-                print "keep entity", keep_entity
-            
-                if not start_dialogue:
+            print "stopped recording, ready to transcribe"
+               
+            # initialize dialogue settings
+            res_emo_check = emo_check()
+            intent_state = ""
+            entity_state = ""
+            top_emotion = ""
+            top_emo_score = ""
+            keep_entity = True
+            keep_intent = True
+            start_dialogue = False
+            loop_count = 0
+            print "len intent", intent_state
+            print "len entity", entity_state
+            print "keep intent", keep_intent
+            print "keep entity", keep_entity
+        
+            while not start_dialogue:
+                if SoundReceiver.recording == False: 
                     print "dialogue boolean",start_dialogue
                     print "convo turn loop count: ",loop_count 
                     try:
@@ -304,13 +305,11 @@ def main():
                                 'text': speech_text
                             }
                         } 
-                        print "adfakfjalfadfjhdkasfhjdsfkafhlkafhdlfkahdsflkafhlds"
 
                         if user_speech_text:
                             start_dialogue = True
-                        print "adfakfjalfadfjhdkasfhjdsfkafhlkafhdlfkahdsflkafhlds"
-                        
-                        if start_dialogue:
+        
+                        while start_dialogue:
                             print "dialogue boolean",start_dialogue
                             # send user_speech_text to Watson Tone Analyzer to be analyzed for tone
                             # detected_emotion, tone_hist = analyze_tone(user_speech_text)
@@ -432,7 +431,7 @@ def main():
                         traceback.print_exc()
                         print "try speaking again"
                         pass
-                    
+                
                     print "going to new conversation turn round"
                     loop_count += 1
                     SoundReceiver.resume_recording()  
