@@ -38,8 +38,8 @@ emotions = ['sadness','joy','anger','confident','tentative','analytical','fear']
 
 # list of possible tone responses per emotional state based on entity
 # TODO: Update string responses 
- emo_ent_list = [{'meeting':["Oh no, I am sorry, what happened at the meeting?","Oh, You sound sad again meeting"],
-    'coworker':["Oh, what bothered you about your coworker?","Oh, You sound sad again coworker"]},
+emo_ent_list = [{'meeting':["Oh no, you sound sad,what happened at the meeting?","Oh, You sound sad again meeting"],
+    'coworker':["Anytime! Glad to hear you sound happy","Oh, You sound happy again coworker"]},
     {'meeting':["Oh, You sound happy meeting","Oh, You sound happy again meeting"],
     'coworker':["Good yo hear you sound happy. I'm always here for you.","Oh, You sound happy again coworker"]},
     {'meeting':["Oh you sound a bit angry,I'm here to help you. What happened at the meeting?","Oh, You sound angry again meeting"],
@@ -55,7 +55,9 @@ emotions = ['sadness','joy','anger','confident','tentative','analytical','fear']
 
 # list of possible entity responses for unemotional user speech text
 ent_res_list = [{'meeting':["Oh, how was the meeting?"],
-    'coworker':["Oh, what bothered you about your coworker?"]}]
+    'coworker':["Oh, what bothered you about your coworker?",
+     "Does he at least try to come up with a middle ground?",
+     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]}]
 
 # list of possible intent responses for unemotional user speech text
 int_res_list = [{'work':["What did you do at work?"],
@@ -154,24 +156,29 @@ class Dialogue:
         
         # find the emotion with the highest tone score
         for tone in tone_dict:
-            print "max score", max_score
+            print "max score", max_score,self.top_emotion,self.top_emo_score
             if tone['score'] > max_score:
                 max_score = tone['score']
                 self.top_emotion = tone['tone_name'].lower()
                 self.top_emo_score = tone['score']
+        
+        #print "top emo",self.top_emotion, self.top_emo_score
+        # return self.top_emotion, self.top_emo_score
+
 
             # set a neutral emotion if under tone score threshold
-            if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
+            elif max_score <= TOP_EMOTION_SCORE_THRESHOLD:
                 print "tone score under threshold"
                 self.top_emotion = 'neutral'
                 self.top_emo_score = None
-            print "top emotion, top score: ", self.top_emotion, self.top_emo_score
+            # print "top emotion, top score: ", self.top_emotion, self.top_emo_score
             
-            # update tone_response emotion tone
-            tone_analysis['document_tone']['tones'][0]['tone_name'] = self.top_emotion
-            tone_analysis['document_tone']['tones'][0]['score'] = self.top_emo_score
+            # # update tone_response emotion tone
+            # tone_analysis['document_tone']['tones'][0]['tone_name'] = self.top_emotion
+            # tone_analysis['document_tone']['tones'][0]['score'] = self.top_emo_score
      
         #return top_emotion, tone_hist
+        # 
         return self.top_emotion, self.top_emo_score
     
     def get_entity_response(self):
