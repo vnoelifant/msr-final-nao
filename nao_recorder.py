@@ -106,12 +106,12 @@ class SoundReceiverModule(ALModule):
         self.num_silence = 0
         self.recording = True
         self.recording_in_progress = False
-        nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
+        nNbrChannelFlag = 3; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         self.nSampleRate = 48000;
         self.CHUNK = 4096
-        self.PADDING = 5 #3
-        self.threshold = 5000
+        self.PADDING = 3 #3
+        self.threshold = 3000
         self.maximum = 16384
         self.sub_chunk = self.nSampleRate/self.CHUNK 
         # buffer for discarding silence
@@ -142,7 +142,7 @@ class SoundReceiverModule(ALModule):
         # get data formatted to convert to .wav audio file
         self.avg = np.asarray(self.avg, dtype=np.int16, order=None)
         self.avg = str(bytearray(self.avg))
-        filename = "speak32"
+        filename = "myspeech"
         self.wavfile = wave.open(filename + '.wav', 'wb')
         self.wavfile.setnchannels(1)
         self.wavfile.setsampwidth(2)
@@ -178,7 +178,7 @@ class SoundReceiverModule(ALModule):
         if sound_detected:
             #print "detected sound"
             self.num_silence = 0
-            #print self.num_silence
+            print self.num_silence
             if not self.recording_in_progress:
                 print "Starting record of phrase"
                 self.recording_in_progress = True
@@ -200,6 +200,7 @@ class SoundReceiverModule(ALModule):
         else:
             #print "sound not over threshold and adding to silence padding buffer"
             self.num_silence += 1
+            print "silence",self.num_silence
             self.padding.extend(self.audioBuffer)
 
     def is_sound_detected(self,data):
@@ -223,7 +224,7 @@ class SoundReceiverModule(ALModule):
         self.avg = []
         self.audioBuffer = ""
         self.num_silence = 0
-        nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
+        nNbrChannelFlag = 3; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         self.silenceBuff = deque(maxlen=self.CHUNK)
         self.padding = deque(maxlen=self.PADDING * self.sub_chunk) 
