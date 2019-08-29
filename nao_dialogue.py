@@ -13,6 +13,24 @@ import sys
 import wave
 import json
 import traceback
+import os
+import json
+from optparse import OptionParser
+import naoqi
+import numpy as np
+import time
+import sys
+import wave
+from os.path import join, dirname
+import json
+from naoqi import ALProxy
+from naoqi import ALBroker
+# from nao_recorder import SoundReceiverModule
+# from nao_dialogue import Transcriber,Dialogue
+import traceback
+
+
+# NAO_IP = "10.104.239.48" 
 
 TOP_EMOTION_SCORE_THRESHOLD = 0.5
 
@@ -47,12 +65,11 @@ emo_ent_list = [{'meeting':["Oh no, you sound sad,what happened at the meeting?"
     {'meeting':["Oh, You sound confident meeting","Oh, You sound confident again meeting"],
     'coworker':["Oh, you are confident. what bothered you about your coworker?","Oh,confident again. Does he at least try to come up with a middle ground?"]},
     {'meeting':["Ah don't be tentative, I can help! What bothered you about meeting?","Oh, You sound tentative again meeting"],
-    'coworker':["Ah don't be tentative, I can help! What bothered you about your coworker?","Oh, You sound tentative coworker"]},
-    {'meeting':["Oh, analytical huh? does he at least try to come up with a middle ground?","Oh, You sound analytical again meeting"],
-    'coworker':["Oh, analytical huh? What bothered you about your coworker?","Oh, You sound analytical again coworker"]},
+    'coworker':["Ah don't be tentative, I can help! What bothered you about your coworker?","Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
+    {'meeting':["Oh, analytical huh?","Oh, You sound analytical again meeting"],
+    'coworker':["Oh, analytical huh? Does he at least try to come up with a middle ground?","Oh, analytical again huh? does he at least try to come up with a middle ground?"]},
     {'meeting':["Oh no, I am sorry you sound scared, what happened at the meeting?","Oh, You sound scared again meeting"],
     'coworker':["Oh don't be scared, what bothered you about your coworker?","Oh, You sound scared again about coworker"]}]
-
 # list of possible entity responses for unemotional user speech text
 ent_res_list = [{'meeting':["Oh, how was the meeting?"],
     'coworker':["Oh, what bothered you about your coworker?",
@@ -64,12 +81,14 @@ int_res_list = [{'work':["What did you do at work?"],
     'reading':["What book did you read?"],
     'friends':["Which friend did you visit?"]}]
 
+#emo_check_list = []
+
 class Transcriber:  
     def __init__(self,path_to_audio_file):
         self.path_to_audio_file = path_to_audio_file 
 
     # convert speech to text via Watson STT
-    def transcribe_audio(path_to_audio_file):
+    def transcribe_audio(self):
         speech_to_text = SpeechToTextV1(
             iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
             url='https://stream.watsonplatform.net/speech-to-text/api')
@@ -97,7 +116,7 @@ class Transcriber:
 
 class Dialogue:
 
-    def __init__(self,user_speech_text,top_emotion,top_emo_score,intent_state,entity_state):
+    def __init__(self,user_speech_text,top_emotion,top_emo_score,tone_hist,intent_state,entity_state):
 
         self.top_emotion = top_emotion
         self.top_emo_score = top_emo_score
@@ -107,6 +126,7 @@ class Dialogue:
         self.emo_ent_list = emo_ent_list
         self.ent_res_list = ent_res_list
         self.int_res_list = int_res_list
+        self.tone_hist = []
        
     def get_intent_response(self):
 
@@ -171,15 +191,21 @@ class Dialogue:
                 print "tone score under threshold"
                 self.top_emotion = 'neutral'
                 self.top_emo_score = None
-            # print "top emotion, top score: ", self.top_emotion, self.top_emo_score
+            print "top emotion, top score: ", self.top_emotion, self.top_emo_score
             
             # # update tone_response emotion tone
             # tone_analysis['document_tone']['tones'][0]['tone_name'] = self.top_emotion
             # tone_analysis['document_tone']['tones'][0]['score'] = self.top_emo_score
-     
+            # append tone and tone score to tone history list
+        if self.top_emo_score != None:
+            self.tone_hist.append({
+                        'tone_name': self.top_emotion,
+                        'score': self.top_emo_score
+             })
+ 
         #return top_emotion, tone_hist
         # 
-        return self.top_emotion, self.top_emo_score
+        return self.top_emotion, self.top_emo_score,self.tone_hist
     
     def get_entity_response(self):
         print "intent state for entity",self.intent_state

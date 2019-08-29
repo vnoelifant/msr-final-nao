@@ -20,7 +20,7 @@ import json
 from naoqi import ALProxy
 from naoqi import ALBroker
 from nao_recorder import SoundReceiverModule
-from nao_dialogue import Transcriber,
+from nao_dialogue import Transcriber,Dialogue
 import traceback
 
 
@@ -86,30 +86,35 @@ def main():
             entity_state = ""
             top_emo_score = ""
             top_emotion = ""
-            input_text = ""
+            tone_hist = []
+            user_speech_text = ""
             
             # instantiate conversation state including input speech text,
             # current top emotion and emotion score, current intent, and current entity if
             # they exist. Every new loop indicates a new conversation turn with potentially
             # new state information or the state is maintained via flags. 
-            convo_state = Dialogue(input_text,top_emotion,top_emo_score,intent_state,entity_state)
+            convo_state = Dialogue(user_speech_text,top_emotion,top_emo_score,tone_hist,intent_state,entity_state)
             
             # start transcribing speech to text
             while not start_dialogue: 
                 if SoundReceiver.recording == False: 
                     print "stopped recording, ready to transcribe"
                     print "dialogue boolean",start_dialogue
-                    print "input text", convo_state.input_text
+                    print "input text", convo_state.user_speech_text
                     print "convo turn loop count: ",convo_turn_count 
                     print "current intent", convo_state.intent_state
                     print "current entity", convo_state.entity_state
                     print "current intent",keep_intent
                     print "keep entity", keep_entity
+                    print "keep emotion", keep_emotion
+                    print "current emotion", convo_state.top_emotion
+                    print "current emo score", convo_state.top_emo_score
+                    print "tone dict hist",convo_state.tone_hist
                     
                     try:
                         
                         my_speech = Transcriber('myspeech.wav')
-                        convo_state.input_text = my_speech.transcribe_audio()
+                        convo_state.user_speech_text = my_speech.transcribe_audio()
 
                         if convo_state.user_speech_text:
                             start_dialogue = True
@@ -119,11 +124,11 @@ def main():
                             print "dialogue boolean",start_dialogue
                             # if tone information not to be maintained
                             print "keep emo boolean",keep_emotion
-                            if not keep_emotion:
-                                print "detect an emotion"
-                                # send user_speech_text to Watson Tone Analyzer to be analyzed for tone
-                                convo_state.top_emotion,convo_state.top_emo_score = convo_state.get_top_emo()
-                                print "new convo state emotion",convo_state.top_emotion,convo_state.top_emo_score
+                            # if not keep_emotion:
+                            #     print "detect an emotion"
+                            #     # send user_speech_text to Watson Tone Analyzer to be analyzed for tone
+                            #     convo_state.top_emotion,convo_state.top_emo_score,convo_state.tone_hist = convo_state.get_top_emo()
+                            #     print "new convo state emotion",convo_state.top_emotion,convo_state.tone_hist
                             # send user_speech_text to Watson Assistant to be analyzed for intents and entities 
                             # dialogue flow is based on intents,entities (maintained or not maintained), and tone
                             try:
@@ -159,60 +164,81 @@ def main():
                                                     pass
                                             print "detected entity",convo_state.entity_state
                                             print "entity bool",keep_entity
-                                        
-                                            if convo_state.top_emotion and convo_state.top_emo_score != None: 
-                                                if convo_state.top_emo_score >= 0.65:
-                                                    res_emo = convo_state.state_response(convo_state.entity_state,convo_state.emo_ent_list)
 
-                                                    try:
-                                                        tts.say(next(res_emo))
-                                                        if convo_state.entity_state == "meeting":
-                                                            keep_entity = False
-                                                    except StopIteration: 
-                                                        pass
-                                                # TODO: Update neutral/lower threshold emotion scores
-                                                
-                                                # elif convo_state.top_emo_score >= 0.5 and convo_state.top_emo_score < 0.75:
-                                                #     keep_emotion = True
-                                                #     res_emo_check = convo_state.emo_check()
-                                                #     try:
-                                                #         tts.say(next(res_emo_check))
-                                                #         start_dialogue = False
-                                                #         misunderstood = True
-                                                #     except StopIteration: 
-                                                #         pass
+                                            try:
+                                                if not keep_emotion:
+                                                    print "detect an emotion"
+                                                    # send user_speech_text to Watson Tone Analyzer to be analyzed for tone
+                                                    convo_state.top_emotion,convo_state.top_emo_score,convo_state.tone_hist = convo_state.get_top_emo()
+                                                    print "new convo state emotion",convo_state.top_emotion,convo_state.tone_hist
+                                                    # if len(convo_state.tone_hist) > 1:
+                                                    #     pass
+                                                    # else:
+                                                    #if convo_state.top_emotion and convo_state.top_emo_score != None: 
+                                                        #res_ent = convo_state.state_response(convo_state.entity_state,convo_state.emo_ent_list)
+                                                        #tts.say(res_ent.send(None))
+                                                        #res_ent.send(None)
+                                                    #res_ent = convo_state.state_response(convo_state.entity_state,convo_state.emo_ent_list)
+                                                    if convo_state.top_emo_score >= 0.5:
+                                                        #res_ent = convo_state.state_response(convo_state.entity_state,convo_state.emo_ent_list)
+                                                        try:
+                                                            #tts.say(res_ent.send(res_ent))
+                                                            tts.say(next(res_ent))
+                                                            if convo_state.entity_state == "meeting":
+                                                                keep_entity = False
+                                                        except StopIteration: 
+                                                            pass
+                                                        # TODO: Update neutral/lower threshold emotion scores
+                                                        
+                                                        # elif convo_state.top_emo_score >= 0.5 and convo_state.top_emo_score < 0.75:
+                                                        #     keep_emotion = True
+                                                        #     res_emo_check = convo_state.emo_check()
+                                                        #     try:
+                                                        #         tts.say(next(res_emo_check))
+                                                        #         start_dialogue = False
+                                                        #         misunderstood = True
+                                                        #     except StopIteration: 
+                                                        #         pass
 
-                                                # elif misunderstood:
-                                                #     if "yes" in convo_state.input_text:
-                                                #         "clarified emotion, continue with emotion response"
-                                                #         try:
-                                                #             print(next(res_ent))
-                                                #         except StopIteration: 
-                                                #             pass   
-                                                #     else:
-                                                #         print "ok, probe user if dialogue will continue"
-                                                #     try:
-                                                #         tts.say(next(res_emo_check))
-                                                #     except StopIteration: 
-                                                #         pass
+                                                        # elif misunderstood:
+                                                        #     if "yes" in convo_state.user_speech_text:
+                                                        #         "clarified emotion, continue with emotion response"
+                                                        #         try:
+                                                        #             print(next(res_ent))
+                                                        #         except StopIteration: 
+                                                        #             pass   
+                                                        #     else:
+                                                        #         print "ok, probe user if dialogue will continue"
+                                                        #     try:
+                                                        #         tts.say(next(res_emo_check))
+                                                        #     except StopIteration: 
+                                                        #         pass
 
-                                            else:
-                                                print "no high emotions detected, just respond to entity"
-                                                try:
-                                                    tts.say(next(res_ent))
-                                                except StopIteration: 
-                                                    pass
-                                     
+                                                    else:
+                                                        print "no high emotions detected, just respond to entity"
+                                                        try:
+                                                            tts.say(next(res_ent))
+                                                        except StopIteration: 
+                                                            pass
+                                         
+                                            except:
+                                                traceback.print_exc()
+                                                print "emo error continue"
+                                                pass
+
+
                                         elif not keep_entity:
                                             convo_state.entity_state = convo_state.get_entity_response()
                                             print "new entity",convo_state.entity_state
+                                            print "new emo object for new entity"
+                                            res_ent = convo_state.state_response(convo_state.entity_state,convo_state.emo_ent_list)
                                             keep_entity = True
-                                            continue   
-                                            
+                                            continue  
+                                                   
                                     except:
                                         traceback.print_exc()
                                         print "can't find entity, go on"
-                                        tts.say("I didn't get your entity. Please try speaking again.")
+                                        #tts.say("I didn't get your entity. Please try speaking again.")
                                         pass
                             
                                 elif not keep_intent:
@@ -226,7 +252,7 @@ def main():
                             except:
                                 traceback.print_exc()
                                 print "can't find intent, continue"
-                                tts.say("I didn't understand your intent. Please try speaking again.")
+                                #tts.say("I didn't understand your intent. Please try speaking again.")
                                 pass
 
                             start_dialogue = False 
@@ -234,7 +260,7 @@ def main():
                     except:
                         print "error in speech detection"
                         nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
-                        tts.say(nao_response) 
+                        #tts.say(nao_response) 
                         traceback.print_exc()
                         print "try speaking again"
                         pass

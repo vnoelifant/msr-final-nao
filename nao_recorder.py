@@ -210,7 +210,7 @@ class SoundReceiverModule(ALModule):
 
     def is_speech_detected(self):
         "Returns 'True' if speech is detected"
-        return  self.recording_in_progress == True and self.num_silence >= 30 # 30 before
+        return  self.recording_in_progress == True and self.num_silence >= 25 # 30 before, 20 ok but riskier
     
     def avg_volume(self):
         print "average the volume"
