@@ -122,8 +122,6 @@ class Dialogue:
         self.emo_ent_list = emo_ent_list
         self.ent_res_list = ent_res_list
         self.int_res_list = int_res_list
-       
-    def get_intent_response(self):
 
     def get_intent_response(self,user_speech_text):
 
@@ -137,30 +135,38 @@ class Dialogue:
         
         return None
 
-    def state_response(self,res_list,state,top_emotion="",top_emo_score=""):
+    def state_response(self,res_list,state,top_emotion="",top_emo_score="",tone_hist=""):
         try:
-            print "state",state
-            if top_emotion and top_emo_score:
-                print "generating response"
-                print "emotion", top_emotion,top_emo_score
-                print "getting an emo response"
-                for emo,response_dict in zip(emotions,res_list):
-                    if emo == top_emotion:
-                        for response in response_dict[state]:
+            if res_list == ent_res_list:
+                print "generating entity response"
+                while len(state) > 0:
+                    print "entity state",state
+                    for response_dict in res_list:
+                        for response in response_dict[state[0]]:
                             yield response
-            else:
-                print "generating response"
-                print "intent or entity state",state
-                print "getting an intent or work non-emotions response"
-                for response_dict in res_list:
-                    for response in response_dict[state]:
-                        yield response
-        
+            
+            if res_list == int_res_list:
+                if len(state) == 1:
+                    print "generating intent response"
+                    print "intent state",state
+                    for response_dict in res_list:
+                        for response in response_dict[state[0]]:
+                            yield response
+
+            if top_emotion and top_emo_score and tone_hist:
+                print "generating emotional response"
+                print "emotional state",top_emotion,top_emo_score
+                while len(tone_hist) > 0:
+                    for emo,response_dict in zip(emotions,res_list):
+                        if emo == top_emotion:
+                            for response in response_dict[state[0]]:
+                                yield response
+    
         except KeyError:
             return
     
-    def emo_check(self):
-        yield "I think you may be feeling", self.top_emotion, "is that right?"
+    def emo_check(self,top_emotion):
+        yield "I think you may be feeling", top_emotion, "is that right?"
         yield "Ok I was just checking, you can tell me more if you'd like."
 
    # get the top emotion
