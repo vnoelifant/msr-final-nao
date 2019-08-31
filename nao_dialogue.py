@@ -171,41 +171,37 @@ class Dialogue:
 
         tone_analysis = tone_analyzer.tone(tone_input=self.user_speech_text['input'], content_type='application/json').get_result()
         
-        # create dictionary of tones
-        tone_dict = tone_analysis['document_tone']['tones']
-        
+        # create list of tones
+        tone_list = tone_analysis['document_tone']['tones']
+       
         # find the emotion with the highest tone score
-        for tone in tone_dict:
-            print "max score", max_score,self.top_emotion,self.top_emo_score
-            if tone['score'] > max_score:
-                max_score = tone['score']
-                self.top_emotion = tone['tone_name'].lower()
-                self.top_emo_score = tone['score']
-        
-        #print "top emo",self.top_emotion, self.top_emo_score
-        # return self.top_emotion, self.top_emo_score
+        for tone_dict in tone_list:
+            print "tone dict",tone_dict
+            if tone_dict['tone_id'] == "sadness" or tone_dict['tone_id'] == "joy" or \
+            tone_dict['tone_id'] == "anger" or tone_dict['tone_id'] == "fear":
+                print "tone id",tone_dict['tone_id'] 
+                print "max score", max_score,self.top_emotion,self.top_emo_score
+                if tone_dict['score'] > max_score:
+                    max_score = tone_dict['score']
+                    #self.top_emotion = tone['tone_name'].lower()
+                    self.top_emotion = tone_dict['tone_id']
+                    self.top_emo_score = tone_dict['score']
+                    print "top emo",self.top_emotion, self.top_emo_score
 
-
-            # set a neutral emotion if under tone score threshold
-            elif max_score <= TOP_EMOTION_SCORE_THRESHOLD:
-                print "tone score under threshold"
-                self.top_emotion = 'neutral'
-                self.top_emo_score = None
-            print "top emotion, top score: ", self.top_emotion, self.top_emo_score
-            
-            # # update tone_response emotion tone
-            # tone_analysis['document_tone']['tones'][0]['tone_name'] = self.top_emotion
-            # tone_analysis['document_tone']['tones'][0]['score'] = self.top_emo_score
-            # append tone and tone score to tone history list
+                # set a neutral emotion if under tone score threshold
+                if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
+                    print "tone score under threshold"
+                    self.top_emotion = 'neutral'
+                    self.top_emo_score = None
+                    print "top emotion, top score: ", self.top_emotion, self.top_emo_score
         if self.top_emo_score != None:
             self.tone_hist.append({
                         'tone_name': self.top_emotion,
                         'score': self.top_emo_score
              })
- 
-        #return top_emotion, tone_hist
-        # 
-        return self.top_emotion, self.top_emo_score,self.tone_hist
+  
+        print "chosen top emo",self.top_emotion, self.top_emo_score
+        return self.top_emotion, self.top_emo_score
     
     def get_entity_response(self):
         print "intent state for entity",self.intent_state
