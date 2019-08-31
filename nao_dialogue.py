@@ -89,88 +89,90 @@ class Transcriber:
 
     # convert speech to text via Watson STT
     def transcribe_audio(self):
-        speech_to_text = SpeechToTextV1(
-            iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
-            url='https://stream.watsonplatform.net/speech-to-text/api')
+        initialize speech to text service
+            speech_to_text = SpeechToTextV1(
+                iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
+                url='https://stream.watsonplatform.net/speech-to-text/api')
 
-        with open((self.path_to_audio_file), 'rb') as audio_file:
-            speech_result = speech_to_text.recognize(
-                    audio=audio_file,
-                    content_type='audio/wav',
-                    word_alternatives_threshold=0.9,
-                    keywords=['hey', 'hi','watson','friend','meet'],
-                    keywords_threshold=0.5
-                ).get_result()
+            with open((self.path_to_audio_file), 'rb') as audio_file:
+                speech_result = speech_to_text.recognize(
+                        audio=audio_file,
+                        content_type='audio/wav',
+                        word_alternatives_threshold=0.9,
+                        keywords=['hey', 'hi','watson','friend','meet'],
+                        keywords_threshold=0.5
+                    ).get_result()
 
-            speech_text = speech_result['results'][0]['alternatives'][0]['transcript']
-            print("User Speech Text: " + speech_text + "\n")
-               
-            self.user_speech_text = {
-                'workspace_id': workspace_id,
-                'input': {
-                    'text': speech_text
+                speech_text = speech_result['results'][0]['alternatives'][0]['transcript']
+                print("User Speech Text: " + speech_text + "\n")
+                   
+                user_speech_text = {
+                    'workspace_id': workspace_id,
+                    'input': {
+                        'text': speech_text
+                    }
                 }
-            }
-        
-        return self.user_speech_text
+            
+            return user_speech_text
 
 class Dialogue:
 
-    def __init__(self,user_speech_text,top_emotion,top_emo_score,tone_hist,intent_state,entity_state):
+    def __init__(self):
 
-        self.top_emotion = top_emotion
-        self.top_emo_score = top_emo_score
-        self.intent_state = intent_state
-        self.entity_state = entity_state
-        self.user_speech_text = user_speech_text
         self.emo_ent_list = emo_ent_list
         self.ent_res_list = ent_res_list
         self.int_res_list = int_res_list
-        self.tone_hist = []
        
     def get_intent_response(self):
 
+    def get_intent_response(self,user_speech_text):
+
         intent_response = assistant.message(workspace_id=workspace_id,
-                                         input=self.user_speech_text['input'],
+                                         input=user_speech_text['input'],
                                         ).get_result()
         
-        if intent_response['intents'][0]['confidence'] > 0.5:
-            self.intent_state = intent_response['intents'][0]['intent']
-            print "response with detected intent"
-            print(json.dumps(intent_response, indent=2))
-            return self.intent_state
-
+        if intent_response['intents'][0]['confidence'] > 0.7:
+            intent_state = intent_response['intents'][0]['intent']
+            return intent_state
+        
         return None
 
-    def state_response(self,state,res_list):
-        print "generating response"
-        print "emotion", self.top_emotion,self.top_emo_score
-
-        if res_list == self.emo_ent_list:
-            print "getting an emo response"
-            for emo,response_dict in zip(emotions,res_list):
-                if emo == self.top_emotion:
+    def state_response(self,res_list,state,top_emotion="",top_emo_score=""):
+        try:
+            print "state",state
+            if top_emotion and top_emo_score:
+                print "generating response"
+                print "emotion", top_emotion,top_emo_score
+                print "getting an emo response"
+                for emo,response_dict in zip(emotions,res_list):
+                    if emo == top_emotion:
+                        for response in response_dict[state]:
+                            yield response
+            else:
+                print "generating response"
+                print "intent or entity state",state
+                print "getting an intent or work non-emotions response"
+                for response_dict in res_list:
                     for response in response_dict[state]:
                         yield response
-        else:
-            print "getting an intent or work non-emotions response"
-            for response_dict in res_list:
-                for response in response_dict[state]:
-                    yield response
+        
+        except KeyError:
+            return
     
     def emo_check(self):
         yield "I think you may be feeling", self.top_emotion, "is that right?"
         yield "Ok I was just checking, you can tell me more if you'd like."
 
-    # get the top emotion
-    def get_top_emo(self):
+   # get the top emotion
+    def get_top_emo(self,user_speech_text):
         # initialize emotion data
         max_score = 0.0
-        self.top_emotion = None
-        self.top_emo_score = None
+        top_emotion = None
+        top_emo_score = None
 
-        tone_analysis = tone_analyzer.tone(tone_input=self.user_speech_text['input'], content_type='application/json').get_result()
-        
+        tone_analysis = tone_analyzer.tone(tone_input=user_speech_text['input'], content_type='application/json').get_result()
+        #print "tone response",json.dumps(tone_analysis, indent=2)
+        print tone_analysis
         # create list of tones
         tone_list = tone_analysis['document_tone']['tones']
        
@@ -180,44 +182,46 @@ class Dialogue:
             if tone_dict['tone_id'] == "sadness" or tone_dict['tone_id'] == "joy" or \
             tone_dict['tone_id'] == "anger" or tone_dict['tone_id'] == "fear":
                 print "tone id",tone_dict['tone_id'] 
-                print "max score", max_score,self.top_emotion,self.top_emo_score
+                print "max score", max_score,top_emotion,top_emo_score
                 if tone_dict['score'] > max_score:
                     max_score = tone_dict['score']
-                    #self.top_emotion = tone['tone_name'].lower()
-                    self.top_emotion = tone_dict['tone_id']
-                    self.top_emo_score = tone_dict['score']
-                    print "top emo",self.top_emotion, self.top_emo_score
+                    #top_emotion = tone['tone_name'].lower()
+                    top_emotion = tone_dict['tone_id']
+                    top_emo_score = tone_dict['score']
+                    print "top emo",top_emotion, top_emo_score
 
                 # set a neutral emotion if under tone score threshold
                 if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
                     print "tone score under threshold"
-                    self.top_emotion = 'neutral'
-                    self.top_emo_score = None
-                    print "top emotion, top score: ", self.top_emotion, self.top_emo_score
-        if self.top_emo_score != None:
-            self.tone_hist.append({
-                        'tone_name': self.top_emotion,
-                        'score': self.top_emo_score
+                    top_emotion = 'neutral'
+                    top_emo_score = None
+                    print "top emotion, top score: ", top_emotion, top_emo_score
+        if top_emo_score != None:
+            tone_hist.append({
+                        'tone_name': top_emotion,
+                        'score': top_emo_score
              })
   
-        print "chosen top emo",self.top_emotion, self.top_emo_score
-        return self.top_emotion, self.top_emo_score
+        print "chosen top emo",top_emotion, top_emo_score
+        return top_emotion, top_emo_score, tone_hist
+
     
-    def get_entity_response(self):
-        print "intent state for entity",self.intent_state
+    def get_entity_response(self,user_speech_text,intent_state):
+        print "intent state for entity",intent_state
         entity_response = assistant.message(workspace_id=workspace_id,
-                                         input=self.user_speech_text['input'],
+                                         input=user_speech_text['input'],
                                         ).get_result()
-        if self.intent_state:
+        if intent_state:
             print "found intent for entity"
-            entity_response['intents'][0]['intent'] = self.intent_state
+            entity_response['intents'][0]['intent'] = intent_state
             entity_response['intents'][0]['confidence'] = None
         
-            print "response with detected entity"
-            print(json.dumps(entity_response, indent=2))
-            self.entity_state = entity_response['entities'][0]['value']
-            return self.entity_state
-
+            
+        if entity_response['entities']:
+            if entity_response['entities'][0]['confidence'] > 0.5:
+                entity_state = entity_response['entities'][0]['value']
+                return entity_state
+        
         return None
  
 
