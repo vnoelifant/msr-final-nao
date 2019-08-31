@@ -51,8 +51,40 @@ tone_analyzer = ToneAnalyzerV3(
 # to retrieve intents, user examples, entities from Watson Assistant
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
+
+# list of possible intent responses for unemotional user speech text
+int_res_list = [{'work':["What did you do at work?"],
+    'reading':["What book did you read?"],
+    'friends':["Which friend did you visit?"]}]
+
+
+# list of possible entity responses for unemotional user speech text
+ent_res_list = [{'meeting':["Oh, how was the meeting?","Oh, how was the meeting again?","Oh, how was the meeting yet again?"],
+    'coworker':["Oh, what bothered you about your coworker?",
+     "Does he at least try to come up with a middle ground?",
+     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]}]
+
+# list of possible tone responses per emotional state based on entity
+# TODO: Update string responses 
+emo_check_list = [{'meeting':["Oh, how was the meeting?"],
+    'coworker':["Oh, what bothered you about your coworker?",
+     "Does he at least try to come up with a middle ground?",
+     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
+     {'meeting':["Oh, how was the meeting?"],
+    'coworker':["Oh, what bothered you about your coworker?",
+     "Does he at least try to come up with a middle ground?",
+     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
+     {'meeting':["Oh, how was the meeting?"],
+    'coworker':["Oh, what bothered you about your coworker?",
+     "Does he at least try to come up with a middle ground?",
+     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
+     {'meeting':["Oh, how was the meeting?"],
+    'coworker':["Oh, what bothered you about your coworker?",
+     "Does he at least try to come up with a middle ground?",
+     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]}]
+
 # list of possible tones
-emotions = ['sadness','joy','anger','confident','tentative','analytical','fear']
+emotions = ['sadness','joy','anger','fear']
 
 # list of possible tone responses per emotional state based on entity
 # TODO: Update string responses 
@@ -70,18 +102,9 @@ emo_ent_list = [{'meeting':["Oh no, you sound sad,what happened at the meeting?"
     'coworker':["Oh, analytical huh? Does he at least try to come up with a middle ground?","Oh, analytical again huh? does he at least try to come up with a middle ground?"]},
     {'meeting':["Oh no, I am sorry you sound scared, what happened at the meeting?","Oh, You sound scared again meeting"],
     'coworker':["Oh don't be scared, what bothered you about your coworker?","Oh, You sound scared again about coworker"]}]
-# list of possible entity responses for unemotional user speech text
-ent_res_list = [{'meeting':["Oh, how was the meeting?"],
-    'coworker':["Oh, what bothered you about your coworker?",
-     "Does he at least try to come up with a middle ground?",
-     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]}]
 
-# list of possible intent responses for unemotional user speech text
-int_res_list = [{'work':["What did you do at work?"],
-    'reading':["What book did you read?"],
-    'friends':["Which friend did you visit?"]}]
-
-#emo_check_list = []
+#TODO: create resonses for which Nao misunderstands the user's tone
+emo_check_list = []
 
 class Transcriber:  
     def __init__(self,path_to_audio_file):
