@@ -92,7 +92,7 @@ def main():
             # new state information or the state is maintained via flags. 
             my_intent = Dialogue()
             my_entity = Dialogue() 
-            my_emo = Dialogue()           
+            my_emo = Dialogue()         
             
             # start recording for speech
             while not start_dialogue: 
@@ -113,124 +113,134 @@ def main():
                             start_dialogue = True
                         print "user speech text",user_speech_text
                         
-                        # begin detecting intents, entities, and tone
-                        try:
-                            print "look for intent"
-                            intent_state = my_intent.get_intent_response(user_speech_text)
-                            if intent_state != None:
-                                intent_list.append(intent_state)
-                        
-                            print "look for entity"
-                            entity_state = my_entity.get_entity_response(user_speech_text,intent_list[0])
-                            if entity_state != None:
-                                entity_list.append(entity_state)
+                        # begin detecting intent
+                        try:    
+                            if keep_intent:
+                                print "keep intent",keep_intent
+                                print "intent list", intent_list,len(intent_list)
+                                if len(intent_list) > 0:
+                                    pass
+                                else:
+                                    print "getting intent response"
+                                    intent_state = my_intent.get_intent_response(input_text) 
+                                    if intent_state != None:
+                                        intent_list.append(intent_state)
+                                     # initialize intent response generator object
+                                    res_int = my_intent.state_response(my_intent.int_res_list,intent_list)
+                                    print "first detected intent: ",intent_list[0]
+                                    try:
+                                        print(next(res_int))
+                                        #keep_intent = False
+                                    except StopIteration: 
+                                        pass
+                                    start_dialogue = False
+                                    continue
 
-                            print "look for tone"
-                            top_emotion,top_emo_score,tone_hist = my_emo.get_top_emo(user_speech_text)
-                           
+                            # detect entity  and tone based on intent
+                            try:
+                                print "look for entity"
+                                print "intent list",intent_list,len(intent_list)
+                                if len(entity_list) > 0:
+                                    pass
+                                else:
+                                    entity_state = my_entity.get_entity_response(input_text,intent_list[0])
+                                    if entity_state != None:
+                                        entity_list.append(entity_state)
+                                
+                                # initialize entity response generator object
+                                if len(entity_list) == 1 and entity_state != None:
+                                    print "initializing entity response object"
+                                    res_ent = my_entity.state_response(my_entity.ent_res_list,entity_list)
 
-                            print "intent list",intent_list, len(intent_list)
-                            print "entity list",entity_list,len(entity_list)
-                            print "tone history dict",tone_hist,len(tone_hist)
+                                print "look for tone"
+                                top_emotion,top_emo_score = my_emo.get_top_emo(input_text)
+                                if top_emo_score != None:
+                                            tone_hist.append({
+                                                    'tone_name': top_emotion,
+                                                    'score': top_emo_score
+                                         })
 
-                            # initialize response generator objects
-                            if len(intent_list) == 1:
-                                print "initializing intent response object"
-                                res_int = my_intent.state_response(my_intent.int_res_list,intent_list)
-                            if len(entity_list) == 1:
-                                print "initializing entity response object"
-                                res_ent = my_entity.state_response(my_entity.ent_res_list,entity_list)
-                            
-                            if len(tone_hist) == 1:
-                                print "initializing tone response object"
-                                res_emo = my_emo.state_response(my_emo.emo_ent_list,entity_list,top_emotion,top_emo_score,tone_hist)
+                                print "intent list",intent_list, len(intent_list)
+                                print "entity list",entity_list,len(entity_list)
+                                print "tone history dict",tone_hist,len(tone_hist)
 
-                            # start dialogue with Nao
-                            while start_dialogue:
-                                # dialogue flow based on first detected intent maintained 
-                                # throughout conversation turn or not maintained
-                                try:
-                                    if keep_intent:
-                                        if len(intent_list) == 1:
-                                            print "getting intent response"
-                                            print "first detected intent: ",intent_list[0]
+                                 # initialize tone response generator object
+                                if len(tone_hist) == 1:
+                                    print "initializing tone response object"
+                                    res_emo = my_emo.state_response(my_emo.emo_ent_list,entity_list,top_emotion,top_emo_score,tone_hist)
+
+                                # start dialogue with Nao
+                                while start_dialogue:
+                                    # dialogue flow including entities and tone based on first detected intent 
+                                    # maintained throughout conversation turn or not maintained  
+                                    if keep_entity:
+                                        if entity_list and entity_state != None and not tone_hist:
+                                            print "detected unemotional entity"
+                                        # print "maintained entity",entity_list[0]
+                                            print "maintained entity",entity_state
                                             try:
-                                                tts.say(next(res_int))
-                                                #keep_intent = False
+                                                print((next(res_ent)))
                                             except StopIteration: 
                                                 pass
+             
+                                        if tone_hist and top_emo_score > 0.60:
+                                            print "detected high emotion"
+                                            try:                          
+                                                print(next(res_emo))
+                                                if entity_list[0] == "meeting":
+                                                    keep_entity = False
+                                            except StopIteration: 
+                                                pass  
+                                        
+                                        if entity_state != None:
+                                            entity_list.append(entity_state)
+                                        print "entity list",entity_list,len(entity_list)
+                                     
+                                    if not keep_entity:
+                                        print "clearing entity list"
+                                        entity_list = []
+                                        print "clearing tone list"
+                                        tone_hist = []
+                                        print "tone list",entity_list,len(entity_list)
+                                        print "detect new entity"
+                                        print "entity list",entity_list,len(entity_list)
 
-                                    if not keep_intent:
+                                    # start detecting for new intent, clear prior intent, entity and tone lists
+                                    if "coworker" in entity_list and top_emotion == "joy":
+                                        keep_intent = False
                                         print "clearing intent list"
                                         intent_list = []
-                                        print "detect new intent"
-                                        print "intent_list",intent_list,len(intent_list)
-                                        keep_intent = True
+                                        print "clearing entity list"
+                                        entity_list = []
+                                        print "clearing tone list"
+                                        tone_hist = []
+                                        print "tone list",entity_list,len(entity_list)
+                                        print "detect new entity"
+                                        print "entity list",entity_list,len(entity_list)
+
+                                        print "ending current convo turn"
                                         start_dialogue = False
+                                        keep_entity = True
+                                        keep_intent = True
+
+                            except:
+                                traceback.print_exc()
+                                print "bad initial entity detection"
+                                tts.say("I wasn't sure of your entity, what was that again?")
+                                pass
+
                                     
-                                    try:
-                                        if keep_entity:
-                                            if entity_list:
-                                                print "in entity branch and will analyze for tone"
-                                                # TODO: add more conditional tone code for other scores      
-                                                if top_emo_score > 0.75:
-                                                    print "detected high emotion"
-                                                    try:                          
-                                                        tts.say(next(res_emo))
-                                                        if entity_list[0] == "meeting":
-                                                            keep_entity = False
-                                                    except StopIteration: 
-                                                        pass  
-                                                else:
-                                                    print "getting entity response, did not detect high emotion"
-                                                    # print "maintained entity",entity_list[0]
-                                                    print "maintained entity",entity_state
-                                                    try:
-                                                        tts.say((next(res_ent)))
-                                                    except StopIteration: 
-                                                        pass
-
-                                                entity_list.append(entity_state)# to avoid gen object re-init
-                                                print "entity_list",entity_list,len(entity_list)
-                                        
-                                        print "keep_entity",keep_entity
-                                        if not keep_entity:
-                                            print "clearing entity list"
-                                            entity_list = []
-                                            print "clearing tone list"
-                                            tone_hist = []
-                                            print "tone list",entity_list,len(entity_list)
-                                            print "detect new entities"
-                                            print "entity list",entity_list,len(entity_list)
-
-                                    except:
-                                        traceback.print_exc()
-                                        print "continue generating responses for entity if bad detection"
-                                        pass
-
-                                except:
-                                    traceback.print_exc()
-                                    print "continue generating responses for intent if bad detection"
-                                    pass
-
-                                print "ending current convo turn"
-                                start_dialogue = False
-                                keep_entity = True
-
-                            
                         except:
                             traceback.print_exc()
-                            print "bad initial detection, go on"
-                            tts.say("I wasn't sure of your intent or entity, what was that again?")
+                            print "bad initial intent detection"
+                            tts.say("I wasn't sure of your intent, what was that again?")
                             pass
-                
-                        
                         
                     except:
                         traceback.print_exc()
                         print "error in speech detection"
-                        nao_response = "Hmm. I couldn't understand you. Try telling me what's going on again."
-                        #tts.say(nao_response) 
+                        nao_response = "Oh Watson, a little rusty today in your detection eh? Sorry, user, can you repeat that?"
+                        tts.say(nao_response) 
                         pass
 
                     print "going to new conversation turn round"

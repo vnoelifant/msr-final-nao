@@ -60,9 +60,12 @@ int_res_list = [{'work':["What did you do at work?"],
 
 # list of possible entity responses for unemotional user speech text
 ent_res_list = [{'meeting':["Oh, how was the meeting?","Oh, how was the meeting again?","Oh, how was the meeting yet again?"],
-    'coworker':["Oh I know how that goes! Does he at least try to come up with a middle ground?",
-     "Oh goodness. I am sorry to hear that. Well, maybe if you speak to someone higher up they can help sort things out for you.",
-     "Anytime! I'm always here for you"]}]
+    'coworker':["Oh, what bothered you about your coworker?",
+     "Does he at least try to come up with a middle ground?",
+     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."],
+     'title':["Oh, what was Kokoro about?","Very interesting, I will check it out!"],
+     'concert':["Oh, what concert did you see?"],
+     'Penny':["Oh, what did you and Penny do?"]}]
 
 # list of possible tone responses per emotional state based on entity
 emotions = ['sadness','joy','anger','fear']
@@ -122,6 +125,7 @@ class Dialogue:
         self.emo_ent_list = emo_ent_list
         self.ent_res_list = ent_res_list
         self.int_res_list = int_res_list
+        self.tone_hist = tone_hist
 
     def get_intent_response(self,user_speech_text):
 
@@ -145,13 +149,13 @@ class Dialogue:
                         for response in response_dict[state[0]]:
                             yield response
             
-            if res_list == int_res_list:
-                #if len(state) == 1:
-                print "generating intent response"
-                print "intent state",state
-                for response_dict in res_list:
-                    for response in response_dict[state[0]]:
-                        yield response
+            if res_list == int_res_list and state[0] != None:
+                if len(state) == 1:
+                    print "generating intent response"
+                    print "intent state",state
+                    for response_dict in res_list:
+                        for response in response_dict[state[0]]:
+                            yield response
 
             if top_emotion and top_emo_score and tone_hist:
                 print "generating emotional response"
@@ -201,13 +205,7 @@ class Dialogue:
                     print "tone score under threshold"
                     top_emotion = 'neutral'
                     top_emo_score = None
-                    #print "top emotion, top score: ", top_emotion, top_emo_score
-        if top_emo_score != None:
-            tone_hist.append({
-                        'tone_name': top_emotion,
-                        'score': top_emo_score
-             })
-  
+ 
         print "chosen top emo",top_emotion, top_emo_score
         return top_emotion, top_emo_score, tone_hist
 
