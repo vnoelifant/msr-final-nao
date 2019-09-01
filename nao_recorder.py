@@ -79,6 +79,7 @@ class SoundReceiverModule(ALModule):
         self.avg = [] # averaged out speech buffer data
         self.maximum = 16384 # frame length for volume average
         self.num_silence = 0
+        self.start_silence = False
 
 
     """
@@ -106,11 +107,11 @@ class SoundReceiverModule(ALModule):
         self.num_silence = 0
         self.recording = True
         self.recording_in_progress = False
-        nNbrChannelFlag = 3; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
+        nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         self.nSampleRate = 48000;
         self.CHUNK = 4096
-        self.PADDING = 3 #3
+        self.PADDING = 5 #3
         self.threshold = 3000
         self.maximum = 16384
         self.sub_chunk = self.nSampleRate/self.CHUNK 
@@ -180,14 +181,14 @@ class SoundReceiverModule(ALModule):
             self.num_silence = 0
             print self.num_silence
             if not self.recording_in_progress:
-                print "Starting record of phrase"
+                print "starting record of phrase"
                 self.recording_in_progress = True
             self.speech.extend(self.audioBuffer)
             self.num_silence += 1
 
         #speech is detected 
         elif speech_detected:
-            print "we have detected speech, ready to transcribe"
+            print "detected speech, ready to transcribe"
             self.speech = list(self.padding) + (self.speech)
             self.speech.extend(list(self.padding))
             self.avg_volume()
@@ -197,9 +198,10 @@ class SoundReceiverModule(ALModule):
         # add sound data to silence padding to be prepended and appended to 
         # speech data
         else:
+            # self.start_silence = True
             #print "sound not over threshold and adding to silence padding buffer"
             self.num_silence += 1
-            print "silence",self.num_silence
+            print self.num_silence
             self.padding.extend(self.audioBuffer)
 
     def is_sound_detected(self,data):
@@ -209,7 +211,7 @@ class SoundReceiverModule(ALModule):
 
     def is_speech_detected(self):
         "Returns 'True' if speech is detected"
-        return  self.recording_in_progress == True and self.num_silence >= 25 # 30 before, 20 ok but riskier, need to wait more to speak for more accuracy
+        return self.recording_in_progress and self.num_silence >= 13 # 30 before, 20 ok but riskier, need to wait more to speak for more accuracy
     
     def avg_volume(self):
         norm = float(self.maximum)/max(abs(sound) for sound in self.speech)
@@ -222,7 +224,7 @@ class SoundReceiverModule(ALModule):
         self.avg = []
         self.audioBuffer = ""
         self.num_silence = 0
-        nNbrChannelFlag = 3; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
+        nNbrChannelFlag = 0; # ALL_Channels: 0,  AL::LEFTCHANNEL: 1, AL::RIGHTCHANNEL: 2; AL::FRONTCHANNEL: 3  or AL::REARCHANNEL: 4.
         nDeinterleave = 0;
         self.silenceBuff = deque(maxlen=self.CHUNK)
         self.padding = deque(maxlen=self.PADDING * self.sub_chunk) 

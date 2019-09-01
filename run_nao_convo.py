@@ -79,9 +79,9 @@ def main():
             convo_turn_count = 0
             start_dialogue = False  
             keep_intent = True
-            print "keep intent",keep_intent
+            #print "keep intent",keep_intent
             keep_entity = True
-            print "keep_entity",keep_entity
+            #print "keep_entity",keep_entity
             tone_hist = []
             misunderstood = False
             intent_list = []
@@ -151,13 +151,15 @@ def main():
                                 # throughout conversation turn or not maintained
                                 try:
                                     if keep_intent:
-                                        if intent_list:
+                                        if len(intent_list) == 1:
                                             print "getting intent response"
                                             print "first detected intent: ",intent_list[0]
                                             try:
                                                 tts.say(next(res_int))
+                                                #keep_intent = False
                                             except StopIteration: 
                                                 pass
+
                                     if not keep_intent:
                                         print "clearing intent list"
                                         intent_list = []
@@ -183,18 +185,23 @@ def main():
                                                     print "getting entity response, did not detect high emotion"
                                                     # print "maintained entity",entity_list[0]
                                                     print "maintained entity",entity_state
-                                                    entity_list.append(entity_state)# to avoid gen object re-init
                                                     try:
                                                         tts.say((next(res_ent)))
                                                     except StopIteration: 
                                                         pass
-                                                  
+
+                                                entity_list.append(entity_state)# to avoid gen object re-init
+                                                print "entity_list",entity_list,len(entity_list)
+                                        
                                         print "keep_entity",keep_entity
                                         if not keep_entity:
                                             print "clearing entity list"
                                             entity_list = []
+                                            print "clearing tone list"
+                                            tone_hist = []
+                                            print "tone list",entity_list,len(entity_list)
                                             print "detect new entities"
-                                            print "entity_list",entity_list,len(entity_list)
+                                            print "entity list",entity_list,len(entity_list)
 
                                     except:
                                         traceback.print_exc()
@@ -214,6 +221,7 @@ def main():
                         except:
                             traceback.print_exc()
                             print "bad initial detection, go on"
+                            tts.say("I wasn't sure of your intent or entity, what was that again?")
                             pass
                 
                         

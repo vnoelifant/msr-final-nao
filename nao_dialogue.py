@@ -61,7 +61,8 @@ int_res_list = [{'work':["What did you do at work?"],
 # list of possible entity responses for unemotional user speech text
 ent_res_list = [{'meeting':["Oh, how was the meeting?","Oh, how was the meeting again?","Oh, how was the meeting yet again?"],
     'coworker':["Oh I know how that goes! Does he at least try to come up with a middle ground?",
-     "Oh goodness. I am sorry to hear that. Well, maybe if you speak to someone higher up they can help sort things out for you."]}]
+     "Oh goodness. I am sorry to hear that. Well, maybe if you speak to someone higher up they can help sort things out for you.",
+     "Anytime! I'm always here for you"]}]
 
 # list of possible tone responses per emotional state based on entity
 emotions = ['sadness','joy','anger','fear']
@@ -145,12 +146,12 @@ class Dialogue:
                             yield response
             
             if res_list == int_res_list:
-                if len(state) == 1:
-                    print "generating intent response"
-                    print "intent state",state
-                    for response_dict in res_list:
-                        for response in response_dict[state[0]]:
-                            yield response
+                #if len(state) == 1:
+                print "generating intent response"
+                print "intent state",state
+                for response_dict in res_list:
+                    for response in response_dict[state[0]]:
+                        yield response
 
             if top_emotion and top_emo_score and tone_hist:
                 print "generating emotional response"
@@ -177,30 +178,30 @@ class Dialogue:
 
         tone_analysis = tone_analyzer.tone(tone_input=user_speech_text['input'], content_type='application/json').get_result()
         #print "tone response",json.dumps(tone_analysis, indent=2)
-        print tone_analysis
+        #print tone_analysis
         # create list of tones
         tone_list = tone_analysis['document_tone']['tones']
        
         # find the emotion with the highest tone score
         for tone_dict in tone_list:
-            print "tone dict",tone_dict
+            #print "tone dict",tone_dict
             if tone_dict['tone_id'] == "sadness" or tone_dict['tone_id'] == "joy" or \
             tone_dict['tone_id'] == "anger" or tone_dict['tone_id'] == "fear":
-                print "tone id",tone_dict['tone_id'] 
-                print "max score", max_score,top_emotion,top_emo_score
+                #print "tone id",tone_dict['tone_id'] 
+                #print "max score", max_score,top_emotion,top_emo_score
                 if tone_dict['score'] > max_score:
                     max_score = tone_dict['score']
                     #top_emotion = tone['tone_name'].lower()
                     top_emotion = tone_dict['tone_id']
                     top_emo_score = tone_dict['score']
-                    print "top emo",top_emotion, top_emo_score
+                    #print "top emo",top_emotion, top_emo_score
 
                 # set a neutral emotion if under tone score threshold
                 if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
                     print "tone score under threshold"
                     top_emotion = 'neutral'
                     top_emo_score = None
-                    print "top emotion, top score: ", top_emotion, top_emo_score
+                    #print "top emotion, top score: ", top_emotion, top_emo_score
         if top_emo_score != None:
             tone_hist.append({
                         'tone_name': top_emotion,
