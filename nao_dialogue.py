@@ -60,51 +60,27 @@ int_res_list = [{'work':["What did you do at work?"],
 
 # list of possible entity responses for unemotional user speech text
 ent_res_list = [{'meeting':["Oh, how was the meeting?","Oh, how was the meeting again?","Oh, how was the meeting yet again?"],
-    'coworker':["Oh, what bothered you about your coworker?",
-     "Does he at least try to come up with a middle ground?",
-     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]}]
+    'coworker':["Oh I know how that goes! Does he at least try to come up with a middle ground?",
+     "Oh goodness. I am sorry to hear that. Well, maybe if you speak to someone higher up they can help sort things out for you."]}]
 
 # list of possible tone responses per emotional state based on entity
-# TODO: Update string responses 
-emo_check_list = [{'meeting':["Oh, how was the meeting?"],
-    'coworker':["Oh, what bothered you about your coworker?",
-     "Does he at least try to come up with a middle ground?",
-     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
-     {'meeting':["Oh, how was the meeting?"],
-    'coworker':["Oh, what bothered you about your coworker?",
-     "Does he at least try to come up with a middle ground?",
-     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
-     {'meeting':["Oh, how was the meeting?"],
-    'coworker':["Oh, what bothered you about your coworker?",
-     "Does he at least try to come up with a middle ground?",
-     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
-     {'meeting':["Oh, how was the meeting?"],
-    'coworker':["Oh, what bothered you about your coworker?",
-     "Does he at least try to come up with a middle ground?",
-     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]}]
-
-# list of possible tones
 emotions = ['sadness','joy','anger','fear']
 
 # list of possible tone responses per emotional state based on entity
 # TODO: Update string responses 
-emo_ent_list = [{'meeting':["Oh no, you sound sad,what happened at the meeting?","Oh, You sound sad again meeting"],
-    'coworker':["Anytime! Glad to hear you sound happy","Oh, You sound happy again coworker"]},
-    {'meeting':["Oh, You sound happy meeting","Oh, You sound happy again meeting"],
-    'coworker':["Good yo hear you sound happy. I'm always here for you.","Oh, You sound happy again coworker"]},
-    {'meeting':["Oh you sound a bit angry,I'm here to help you. What happened at the meeting?","Oh, You sound angry again meeting"],
-    'coworker':["Oh, you are angry, let me help. What bothered you about your coworker?","Oh, You sound angry again about coworker"]},
-    {'meeting':["Oh, You sound confident meeting","Oh, You sound confident again meeting"],
-    'coworker':["Oh, you are confident. what bothered you about your coworker?","Oh,confident again. Does he at least try to come up with a middle ground?"]},
-    {'meeting':["Ah don't be tentative, I can help! What bothered you about meeting?","Oh, You sound tentative again meeting"],
-    'coworker':["Ah don't be tentative, I can help! What bothered you about your coworker?","Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."]},
-    {'meeting':["Oh, analytical huh?","Oh, You sound analytical again meeting"],
-    'coworker':["Oh, analytical huh? Does he at least try to come up with a middle ground?","Oh, analytical again huh? does he at least try to come up with a middle ground?"]},
-    {'meeting':["Oh no, I am sorry you sound scared, what happened at the meeting?","Oh, You sound scared again meeting"],
+emo_ent_list = [{'meeting':["Oh no, I am sorry to hear that. What happened at the meeting?","Oh, You sound sad again about your meeting."],
+    'coworker':["Oh, I am sorry to hear that. What bothered you about your coworker?","Oh, You sound sad again about your coworker."]},
+    {'meeting':["Great to hear you sound happy about the meeting!","Great to hear you sound happy again about the meeting!"],
+    'coworker':["Anytime! Great to hear you sound happy. I'm always here for you.","Oh, You sound happy again coworker"]},
+    {'meeting':["Oh no, sorry you are frustrated. Let me help. What happened at the meeting?","Oh, You sound angry again meeting"],
+    'coworker':["Oh no, sorry you are frustrated. Let me help. What bothered you about your coworker?","Oh, You sound angry again about coworker"]},
+    {'meeting':["Oh no, I am sorry you sound scared. I am here to help. What happened at the meeting?","Oh, You sound scared again meeting"],
     'coworker':["Oh don't be scared, what bothered you about your coworker?","Oh, You sound scared again about coworker"]}]
 
 #TODO: create resonses for which Nao misunderstands the user's tone
 emo_check_list = []
+
+tone_hist = []
 
 class Transcriber:  
     def __init__(self,path_to_audio_file):
@@ -112,7 +88,7 @@ class Transcriber:
 
     # convert speech to text via Watson STT
     def transcribe_audio(self):
-        initialize speech to text service
+        #initialize speech to text service
             speech_to_text = SpeechToTextV1(
                 iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
                 url='https://stream.watsonplatform.net/speech-to-text/api')
@@ -245,10 +221,12 @@ class Dialogue:
             entity_response['intents'][0]['intent'] = intent_state
             entity_response['intents'][0]['confidence'] = None
         
-            
+           
         if entity_response['entities']:
             if entity_response['entities'][0]['confidence'] > 0.5:
                 entity_state = entity_response['entities'][0]['value']
+                print "response with detected entity"
+                print(json.dumps(entity_response, indent=2))
                 return entity_state
         
         return None

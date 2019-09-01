@@ -74,7 +74,7 @@ class SoundReceiverModule(ALModule):
         self.wavfile = None
         self.recording_in_progress = False
         self.silenceBuff = []
-        self.threshold = 5000 # threshold to detect speech
+        self.threshold = 3000 # threshold to detect speech
         self.speech = []# initialize speech buffer to send for transcription
         self.avg = [] # averaged out speech buffer data
         self.maximum = 16384 # frame length for volume average
@@ -190,7 +190,6 @@ class SoundReceiverModule(ALModule):
             print "we have detected speech, ready to transcribe"
             self.speech = list(self.padding) + (self.speech)
             self.speech.extend(list(self.padding))
-            print "average the volume"
             self.avg_volume()
             print "pausing recording and getting ready to transcribe"
             self.pause_and_transcribe()
@@ -210,10 +209,9 @@ class SoundReceiverModule(ALModule):
 
     def is_speech_detected(self):
         "Returns 'True' if speech is detected"
-        return  self.recording_in_progress == True and self.num_silence >= 25 # 30 before, 20 ok but riskier
+        return  self.recording_in_progress == True and self.num_silence >= 25 # 30 before, 20 ok but riskier, need to wait more to speak for more accuracy
     
     def avg_volume(self):
-        print "average the volume"
         norm = float(self.maximum)/max(abs(sound) for sound in self.speech)
 
         for sound in self.speech:
