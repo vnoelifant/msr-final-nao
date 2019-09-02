@@ -295,7 +295,27 @@ catch index error and print results. Write pseudocode in functions first. Fill i
       
   
   * ### **8/21/19 Meeting Minutes**:
-    
+    * IN WORK
+
+  * ### **Final Week: 8/28/19-9/3.19 Status**:
+    * Debugging speech detection 
+      * modified nao recorder threshold and silence count parameters to improve reliability of speech detection
+    * Debugging dialogue code
+      * Details IN WORK
+    * Added more entities in Watson Assistant GUI
+
+    * Updated video showing following conversation capabilities:
+      * tone detection combined with entities/intents
+      * transition between work, book, and friends intents
+      * transition between different entities within intents
+
+      [![IMAGE ALT TEXT](http://img.youtube.com/vi/I6YmVdc3HOg/0.jpg)](http://www.youtube.com/watch?v=I6YmVdc3HOg "Nao Conversation")
+
+    * TODO on 9/2/19:
+      * add more friend and book entities/responses 
+      * update/test code to have Nao speak back entity per list index 
+      * create final project videos
+      * create project portfolio post
 
 
 

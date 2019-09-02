@@ -63,9 +63,9 @@ ent_res_list = [{'meeting':["Oh, how was the meeting?","Oh, how was the meeting 
     'coworker':["Oh, what bothered you about your coworker?",
      "Does he at least try to come up with a middle ground?",
      "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."],
-     'Quicksand':["Oh, what was Quicksand about?","Very interesting, I will check it out!"],
+     'Quicksand':["Oh,cool! Quicksand is next on my reading list!","Very interesting, I will check it out!"],
      'concert':["Oh, what concert did you see?"],
-     'Penny':["Oh, what did you and Penny do?"],
+     'Penny':["Oh, nice. I want to know more about Penny!"],
      'concert':["That sounds like a lot of fun!"]}]
 
 # list of possible tone responses per emotional state based on entity
@@ -94,30 +94,30 @@ class Transcriber:
     # convert speech to text via Watson STT
     def transcribe_audio(self):
         #initialize speech to text service
-            speech_to_text = SpeechToTextV1(
-                iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
-                url='https://stream.watsonplatform.net/speech-to-text/api')
+        speech_to_text = SpeechToTextV1(
+            iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
+            url='https://stream.watsonplatform.net/speech-to-text/api')
 
-            with open((self.path_to_audio_file), 'rb') as audio_file:
-                speech_result = speech_to_text.recognize(
-                        audio=audio_file,
-                        content_type='audio/wav',
-                        word_alternatives_threshold=0.9,
-                        keywords=['hey', 'hi','watson','friend','meet'],
-                        keywords_threshold=0.5
-                    ).get_result()
+        with open((self.path_to_audio_file), 'rb') as audio_file:
+            speech_result = speech_to_text.recognize(
+                    audio=audio_file,
+                    content_type='audio/wav',
+                    word_alternatives_threshold=0.9,
+                    keywords=['hey', 'hi','watson','friend','meet'],
+                    keywords_threshold=0.5
+                ).get_result()
 
-                speech_text = speech_result['results'][0]['alternatives'][0]['transcript']
-                print("User Speech Text: " + speech_text + "\n")
-                   
-                user_speech_text = {
-                    'workspace_id': workspace_id,
-                    'input': {
-                        'text': speech_text
-                    }
+            speech_text = speech_result['results'][0]['alternatives'][0]['transcript']
+            print("User Speech Text: " + speech_text + "\n")
+               
+            user_speech_text = {
+                'workspace_id': workspace_id,
+                'input': {
+                    'text': speech_text
                 }
-            
-            return user_speech_text
+            }
+        
+        return user_speech_text
 
 class Dialogue:
 
@@ -230,6 +230,6 @@ class Dialogue:
                 print(json.dumps(entity_response, indent=2))
                 return entity_state, entity
         
-        return None
+        return None,None
  
 
