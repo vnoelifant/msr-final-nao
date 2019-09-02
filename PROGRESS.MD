@@ -316,7 +316,7 @@ catch index error and print results. Write pseudocode in functions first. Fill i
 
     #### TODO on 9/2/19:
       * add more friend and book entities/responses 
-      * update/test code to have Nao speak back entity per list index 
+      * update/test code to have Nao speak back entity per list index. (DONE)
       * create final project videos
       * create project portfolio post
 

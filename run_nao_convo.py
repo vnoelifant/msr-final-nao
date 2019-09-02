@@ -26,6 +26,32 @@ import traceback
 
 NAO_IP = "169.254.126.202" 
 
+def build_intent_res(intent_list):
+    return [{'work':["What did you do at" + " " + intent_list[0]],'reading':["What book did you read?"],'friends':["Which friend did you visit?"]}]
+
+def build_entity_res(entity_list):
+    return [{'meeting':["Oh, how was the" + " " + entity_list[0],"Oh, how was the" + " " + entity_list[0] + " " + "again?","Oh, how was the meeting yet again?"],
+                
+                'coworker':["Oh, what bothered you about" + " " + entity_list[0],"Does" + " " + entity_list[0] + " " + "at least try to come up with a middle ground?",
+                
+                "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."],
+                
+                'title':["Oh, what was Kokoro about?","Very interesting, I will check it out!"],
+                
+                'concert':["Oh, what concert did you see?"],
+
+                'Penny':["Oh, what did you and Penny do?"]}]
+
+def build_emo_res(entity_list):
+    return [{'meeting':["Oh no, you sound sad,what happened at the" + " " + entity_list[0],"Oh no, you sound sad,what happened at the" + " " + entity_list[0]],
+                'coworker':["Oh no, you sound sad,what bothered you about" + " " + entity_list[0],"Oh no, you sound sad,what bothered you about" + " " + entity_list[0]]},
+                {'meeting':["Oh, You sound happy about the" + " " + entity_list[0],"Oh, You sound happy again about the" + " " + entity_list[0]],
+                'coworker':["Good to hear you are experiencing joy", "I'm always here for you.","Good to hear you sound happy again"]},
+                {'meeting':["Oh you sound a bit angry,I'm here to help you. What happened at the" + " " + entity_list[0],"Oh, You sound angry again about the" + " "  + entity_list[0]],
+                'coworker':["Oh, you are angry, let me help. What bothered you about" + " " + entity_list[0],"Oh, You sound angry again about" + " " + entity_list[0]]},
+                {'meeting':["Oh no, I am sorry you sound scared, what happened at the" + " " + entity_list[0],"Oh, You sound scared again about the" + " " +  entity_list[0]],
+                'coworker':["Oh don't be scared, what bothered you about" + " " + entity_list[0],"Oh, You sound scared again about" + " " + entity_list[0]]}]
+
 def main():
     """ Main entry point
     """
@@ -87,12 +113,10 @@ def main():
             intent_list = []
             entity_list = []
             
-            # instantiate conversation state intent,entity,and emotion.
+            # instantiate conversation state
             # every new loop indicates a new conversation turn with potentially
             # new state information or the state is maintained via flags. 
-            my_intent = Dialogue()
-            my_entity = Dialogue() 
-            my_emo = Dialogue()         
+            my_convo = Dialogue('myspeech.wav')       
             
             # start recording for speech
             while not start_dialogue: 
@@ -122,11 +146,13 @@ def main():
                                     pass
                                 else:
                                     print "getting intent response"
-                                    intent_state = my_intent.get_intent_response(user_speech_text) 
+                                    intent_state = my_convo.get_intent_response(user_speech_text) 
                                     if intent_state != None:
                                         intent_list.append(intent_state)
-                                     # initialize intent response generator object
-                                    res_int = my_intent.state_response(my_intent.int_res_list,intent_list)
+                                    # build list of possible intent responses
+                                    int_res_list = build_intent_res(intent_list)
+                                    # initialize intent response generator object
+                                    res_int = my_convo.intent_state_response(int_res_list,intent_list)
                                     print "first detected intent: ",intent_list[0]
                                     try:
                                         tts.say(next(res_int))
@@ -143,17 +169,19 @@ def main():
                                 if len(entity_list) > 0:
                                     pass
                                 else:
-                                    entity_state, entity = my_entity.get_entity_response(user_speech_text,intent_list[0])
+                                    entity_state, entity = my_convo.get_entity_response(user_speech_text,intent_list[0])
                                     if entity_state != None:
                                         entity_list.append(entity_state)
                                 
                                 # initialize entity response generator object
                                 if len(entity_list) == 1 and entity_state != None:
-                                    print "initializing entity response object"
-                                    res_ent = my_entity.state_response(my_entity.ent_res_list,entity_list)
-
+                                    # build list of possible intent responses
+                                    ent_res_list = build_entity_res(entity_list)
+                                    # initialize entity response generator object
+                                    res_ent = my_convo.entity_state_response(ent_res_list,entity_list)
+                                   
                                 print "look for tone"
-                                top_emotion,top_emo_score = my_emo.get_top_emo(user_speech_text)
+                                top_emotion,top_emo_score = my_convo.get_top_emo(user_speech_text)
                                 if top_emo_score != None and top_emo_score >= 0.70:
                                             tone_hist.append({
                                                     'tone_name': top_emotion,
@@ -166,8 +194,11 @@ def main():
 
                                  # initialize tone response generator object
                                 if len(tone_hist) == 1:
+                                    # build list of possible tone responses based on entity
+                                    emo_ent_list = build_emo_res(entity_list)
+                                    # initialize tone response generator object
                                     print "initializing tone response object"
-                                    res_emo = my_emo.state_response(my_emo.emo_ent_list,entity_list,top_emotion,top_emo_score,tone_hist)
+                                    res_emo = my_convo.emo_state_response(emo_ent_list,entity_list,top_emotion)
 
                                 # start dialogue with Nao
                                 while start_dialogue:
@@ -186,7 +217,7 @@ def main():
                                             except StopIteration: 
                                                 pass
              
-                                        if tone_hist and top_emo_score > 0.60:
+                                        if tone_hist:
                                             print "detected high emotion"
                                             try:                          
                                                 tts.say(next(res_emo))

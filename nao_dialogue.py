@@ -29,10 +29,7 @@ from naoqi import ALBroker
 # from nao_dialogue import Transcriber,Dialogue
 import traceback
 
-
-# NAO_IP = "10.104.239.48" 
-
-TOP_EMOTION_SCORE_THRESHOLD = 0.5
+TOP_EMOTION_SCORE_THRESHOLD = 0.7
 
 # initialize Watson Assistant service
 assistant = AssistantV1(
@@ -51,43 +48,9 @@ tone_analyzer = ToneAnalyzerV3(
 # to retrieve intents, user examples, entities from Watson Assistant
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
-
-# list of possible intent responses for unemotional user speech text
-int_res_list = [{'work':["What did you do at work?"],
-    'reading':["What book did you read?"],
-    'friends':["Which friend did you visit?"]}]
-
-
-# list of possible entity responses for unemotional user speech text
-ent_res_list = [{'meeting':["Oh, how was the meeting?","Oh, how was the meeting again?","Oh, how was the meeting yet again?"],
-    'coworker':["Oh, what bothered you about your coworker?",
-     "Does he at least try to come up with a middle ground?",
-     "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."],
-     'Quicksand':["Oh,cool! Quicksand is next on my reading list!","Very interesting, I will check it out!"],
-     'concert':["Oh, what concert did you see?"],
-     'Penny':["Oh, nice. I want to know more about Penny!"],
-     'concert':["That sounds like a lot of fun!"]}]
-
-# list of possible tone responses per emotional state based on entity
 emotions = ['sadness','joy','anger','fear']
 
-# list of possible tone responses per emotional state based on entity
-# TODO: Update string responses 
-emo_ent_list = [{'meeting':["Oh no, I am sorry to hear that. What happened at the meeting?","Oh, You sound sad again about your meeting."],
-    'coworker':["Oh, I am sorry to hear that. What bothered you about your coworker?","Oh, You sound sad again about your coworker."]},
-    {'meeting':["Great to hear you sound happy about the meeting!","Great to hear you sound happy again about the meeting!"],
-    'coworker':["Anytime! Great to hear you sound happy. I'm always here for you.","Oh, You sound happy again coworker"]},
-    {'meeting':["Oh no, sorry you are frustrated. Let me help. What happened at the meeting?","Oh, You sound angry again meeting"],
-    'coworker':["Oh no, sorry you are frustrated. Let me help. What bothered you about your coworker?","Oh, You sound angry again about coworker"]},
-    {'meeting':["Oh no, I am sorry you sound scared. I am here to help. What happened at the meeting?","Oh, You sound scared again meeting"],
-    'coworker':["Oh don't be scared, what bothered you about your coworker?","Oh, You sound scared again about coworker"]}]
-
-#TODO: create resonses for which Nao misunderstands the user's tone
-emo_check_list = []
-
-tone_hist = []
-
-class Transcriber:  
+class Dialogue:  
     def __init__(self,path_to_audio_file):
         self.path_to_audio_file = path_to_audio_file 
 
@@ -119,15 +82,6 @@ class Transcriber:
         
         return user_speech_text
 
-class Dialogue:
-
-    def __init__(self):
-
-        self.emo_ent_list = emo_ent_list
-        self.ent_res_list = ent_res_list
-        self.int_res_list = int_res_list
-        self.tone_hist = tone_hist
-
     def get_intent_response(self,user_speech_text):
 
         intent_response = assistant.message(workspace_id=workspace_id,
@@ -140,39 +94,27 @@ class Dialogue:
         
         return None
 
-    def state_response(self,res_list,state,top_emotion="",top_emo_score="",tone_hist=""):
-        try:
-            if res_list == ent_res_list:
-                print "generating entity response"
-                while len(state) > 0:
-                    print "entity state",state
-                    for response_dict in res_list:
-                        for response in response_dict[state[0]]:
-                            yield response
-            
-            if res_list == int_res_list and state[0] != None:
-                if len(state) == 1:
-                    print "generating intent response"
-                    print "intent state",state
-                    for response_dict in res_list:
-                        for response in response_dict[state[0]]:
-                            yield response
+    def get_entity_response(self,user_speech_text,intent_state):
+        print "intent state for entity",intent_state
+        entity_response = assistant.message(workspace_id=workspace_id,
+                                         input=user_speech_text['input'],
+                                        ).get_result()
+        if intent_state:
+            print "found intent for entity"
+            entity_response['intents'][0]['intent'] = intent_state
+            entity_response['intents'][0]['confidence'] = None
+        
+           
+        if entity_response['entities']:
+            if entity_response['entities'][0]['confidence'] > 0.5:
+                entity_state = entity_response['entities'][0]['value']
+                entity = entity_response['entities'][0]['entity']
+                print "response with detected entity"
+                print(json.dumps(entity_response, indent=2))
+                return entity_state, entity
+        
+        return None,None
 
-            if top_emotion and top_emo_score and tone_hist:
-                print "generating emotional response"
-                print "emotional state",top_emotion,top_emo_score
-                while len(tone_hist) > 0:
-                    for emo,response_dict in zip(emotions,res_list):
-                        if emo == top_emotion:
-                            for response in response_dict[state[0]]:
-                                yield response
-    
-        except KeyError:
-            return
-    
-    def emo_check(self,top_emotion):
-        yield "I think you may be feeling" + " " + top_emotion + " " + "is that right?"
-        yield "Ok I was just checking, you can tell me more if you'd like."
 
    # get the top emotion
     def get_top_emo(self,user_speech_text):
@@ -210,26 +152,45 @@ class Dialogue:
         print "chosen top emo",top_emotion, top_emo_score
         return top_emotion, top_emo_score
 
+    def intent_state_response(self,res_list,intent_list):
+        try:
+        
+            #if len(res_list) == 1:
+            print "generating intent response"
+            print "intent state",intent_list[0]
+            for response_dict in res_list:
+                for response in response_dict[intent_list[0]]:
+                    yield response
+            
+        except KeyError:
+            return
+
+    def entity_state_response(self,res_list,entity_list):
+        try:
+            print "generating entity response"
+            #while len(state) > 0:
+            print "entity state",entity_list[0]
+            for response_dict in res_list:
+                for response in response_dict[entity_list[0]]:
+                    yield response
     
-    def get_entity_response(self,user_speech_text,intent_state):
-        print "intent state for entity",intent_state
-        entity_response = assistant.message(workspace_id=workspace_id,
-                                         input=user_speech_text['input'],
-                                        ).get_result()
-        if intent_state:
-            print "found intent for entity"
-            entity_response['intents'][0]['intent'] = intent_state
-            entity_response['intents'][0]['confidence'] = None
-        
-           
-        if entity_response['entities']:
-            if entity_response['entities'][0]['confidence'] > 0.5:
-                entity_state = entity_response['entities'][0]['value']
-                entity = entity_response['entities'][0]['entity']
-                print "response with detected entity"
-                print(json.dumps(entity_response, indent=2))
-                return entity_state, entity
-        
-        return None,None
+        except KeyError:
+            return
+
+    def emo_state_response(self,res_list,entity_list,top_emotion):
+        try:
+       
+            print "generating emotional response"
+            print "res list", res_list
+            #while len(tone_hist) > 0:
+            print "entity state",entity_list[0]
+            for emo,response_dict in zip(emotions,res_list):
+                if emo == top_emotion:
+                    print "top emotion",top_emotion
+                    for response in response_dict[entity_list[0]]:
+                        yield response
+    
+        except KeyError:
+            return
  
 
