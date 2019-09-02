@@ -311,7 +311,10 @@ catch index error and print results. Write pseudocode in functions first. Fill i
 
       [![IMAGE ALT TEXT](http://img.youtube.com/vi/I6YmVdc3HOg/0.jpg)](http://www.youtube.com/watch?v=I6YmVdc3HOg "Nao Conversation")
 
-    * TODO on 9/2/19:
+    * #### Issues
+      * IN WORK
+
+    #### TODO on 9/2/19:
       * add more friend and book entities/responses 
       * update/test code to have Nao speak back entity per list index 
       * create final project videos
