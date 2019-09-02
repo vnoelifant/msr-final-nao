@@ -63,7 +63,7 @@ def main():
     tts = ALProxy("ALTextToSpeech", "169.254.126.202", 9559)
 
     # Nao wants to know what you did today
-    nao_response = "Hello, what did you do today?"
+    nao_response = "Hello, Veronica, what did you do today?"
     tts.say(nao_response)
     print("Please say something into NAO's microphone\n")
     
@@ -122,14 +122,14 @@ def main():
                                     pass
                                 else:
                                     print "getting intent response"
-                                    intent_state = my_intent.get_intent_response(input_text) 
+                                    intent_state = my_intent.get_intent_response(user_speech_text) 
                                     if intent_state != None:
                                         intent_list.append(intent_state)
                                      # initialize intent response generator object
                                     res_int = my_intent.state_response(my_intent.int_res_list,intent_list)
                                     print "first detected intent: ",intent_list[0]
                                     try:
-                                        print(next(res_int))
+                                        tts.say(next(res_int))
                                         #keep_intent = False
                                     except StopIteration: 
                                         pass
@@ -143,7 +143,7 @@ def main():
                                 if len(entity_list) > 0:
                                     pass
                                 else:
-                                    entity_state = my_entity.get_entity_response(input_text,intent_list[0])
+                                    entity_state, entity = my_entity.get_entity_response(user_speech_text,intent_list[0])
                                     if entity_state != None:
                                         entity_list.append(entity_state)
                                 
@@ -153,8 +153,8 @@ def main():
                                     res_ent = my_entity.state_response(my_entity.ent_res_list,entity_list)
 
                                 print "look for tone"
-                                top_emotion,top_emo_score = my_emo.get_top_emo(input_text)
-                                if top_emo_score != None:
+                                top_emotion,top_emo_score = my_emo.get_top_emo(user_speech_text)
+                                if top_emo_score != None and top_emo_score >= 0.70:
                                             tone_hist.append({
                                                     'tone_name': top_emotion,
                                                     'score': top_emo_score
@@ -179,16 +179,23 @@ def main():
                                         # print "maintained entity",entity_list[0]
                                             print "maintained entity",entity_state
                                             try:
-                                                print((next(res_ent)))
+                                                tts.say((next(res_ent)))
+                                                 # new test to transition to other remaining intent
+                                                if "Quicksand" in entity_list:
+                                                    keep_intent = False
                                             except StopIteration: 
                                                 pass
              
                                         if tone_hist and top_emo_score > 0.60:
                                             print "detected high emotion"
                                             try:                          
-                                                print(next(res_emo))
+                                                tts.say(next(res_emo))
+                                                # transitioning to new work entity
                                                 if entity_list[0] == "meeting":
                                                     keep_entity = False
+                                                # transitioning to new intent after joyful ending to work intent dialogue
+                                                if "coworker" in entity_list and top_emotion == "joy":
+                                                    keep_intent = False
                                             except StopIteration: 
                                                 pass  
                                         
@@ -206,8 +213,7 @@ def main():
                                         print "entity list",entity_list,len(entity_list)
 
                                     # start detecting for new intent, clear prior intent, entity and tone lists
-                                    if "coworker" in entity_list and top_emotion == "joy":
-                                        keep_intent = False
+                                    if not keep_intent:
                                         print "clearing intent list"
                                         intent_list = []
                                         print "clearing entity list"
@@ -217,11 +223,14 @@ def main():
                                         print "tone list",entity_list,len(entity_list)
                                         print "detect new entity"
                                         print "entity list",entity_list,len(entity_list)
+                                         # Nao wants to know what someone else did today
+                                        nao_response = "Hello, new friend, what did you do today?"
+                                        tts.say(nao_response)
 
-                                        print "ending current convo turn"
-                                        start_dialogue = False
-                                        keep_entity = True
-                                        keep_intent = True
+                                    print "ending current convo turn"
+                                    start_dialogue = False
+                                    keep_entity = True
+                                    keep_intent = True
 
                             except:
                                 traceback.print_exc()
@@ -239,8 +248,8 @@ def main():
                     except:
                         traceback.print_exc()
                         print "error in speech detection"
-                        nao_response = "Oh Watson, a little rusty today in your detection eh? Sorry, user, can you repeat that?"
-                        tts.say(nao_response) 
+                        # nao_response = "Oh Watson, a little rusty today in your detection eh? Sorry, user, can you repeat that?"
+                        # tts.say(nao_response) 
                         pass
 
                     print "going to new conversation turn round"

@@ -63,9 +63,10 @@ ent_res_list = [{'meeting':["Oh, how was the meeting?","Oh, how was the meeting 
     'coworker':["Oh, what bothered you about your coworker?",
      "Does he at least try to come up with a middle ground?",
      "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."],
-     'title':["Oh, what was Kokoro about?","Very interesting, I will check it out!"],
+     'Quicksand':["Oh, what was Quicksand about?","Very interesting, I will check it out!"],
      'concert':["Oh, what concert did you see?"],
-     'Penny':["Oh, what did you and Penny do?"]}]
+     'Penny':["Oh, what did you and Penny do?"],
+     'concert':["That sounds like a lot of fun!"]}]
 
 # list of possible tone responses per emotional state based on entity
 emotions = ['sadness','joy','anger','fear']
@@ -170,7 +171,7 @@ class Dialogue:
             return
     
     def emo_check(self,top_emotion):
-        yield "I think you may be feeling", top_emotion, "is that right?"
+        yield "I think you may be feeling" + " " + top_emotion + " " + "is that right?"
         yield "Ok I was just checking, you can tell me more if you'd like."
 
    # get the top emotion
@@ -207,7 +208,7 @@ class Dialogue:
                     top_emo_score = None
  
         print "chosen top emo",top_emotion, top_emo_score
-        return top_emotion, top_emo_score, tone_hist
+        return top_emotion, top_emo_score
 
     
     def get_entity_response(self,user_speech_text,intent_state):
@@ -224,9 +225,10 @@ class Dialogue:
         if entity_response['entities']:
             if entity_response['entities'][0]['confidence'] > 0.5:
                 entity_state = entity_response['entities'][0]['value']
+                entity = entity_response['entities'][0]['entity']
                 print "response with detected entity"
                 print(json.dumps(entity_response, indent=2))
-                return entity_state
+                return entity_state, entity
         
         return None
  
