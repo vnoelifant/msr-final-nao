@@ -318,7 +318,12 @@ catch index error and print results. Write pseudocode in functions first. Fill i
       * add more friend and book entities/responses (DONE)
       * update/test code to have Nao speak back entity per list index. (DONE)
       * create final project videos (DONE)
-      * create project portfolio post (IN WORK)
+      * create project portfolio post (DONE)
 
+      * ### Note for Final Project Demo vids
+      Originally there was planned to be 2 cases shown below, (sets of three with a slightly more complex dialogue than posted in portfolio) but due to technical issues and time contraints, the fallback was to perform the 4 cases as outlined in the portfolio. 
+
+      Case 1: Intent: Work (negative tone), transition to Intent: Friends (positive tone), transition to Intent: Reading (negative tone)
+      Case 2: Intent: Friends (negative tone), transition to Intent: Work (positive tone), transition to Intent: Reading (positive tone)
 
 

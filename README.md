@@ -62,42 +62,14 @@ This is the final project of the Northwestern MSR project. This project is an ex
 * Alternative Solution: [Natural Language Understanding](https://www.ibm.com/cloud/watson-natural-language-understanding): Analyze text to extract metadata from content such as concepts, entities, keywords, categories, sentiment, emotion, relations, and semantic roles using natural language understanding. 
   * **Note** It seems this solution would provide more information from a speech utterance vs. just the Tone Analyzer. But not sure whether this vs. Tone integrated with Assistant would be a better choice. Also, can the intents and entities sent to be directly sent to Watson Studio machine learning model?
 
-## Dialogue Flow (IN WORK)
+## Dialogue Flow (Preliminary)
 ![](images/nao_dialogue.png)
 
 
-## List of Intents and Entities (IN WORK, Updated 8/20/19)
+## List of Intents and Entities 
 
-|  **Intents** | **Entities** | **Entity Values** |
-| --- | --- | --- |
-|  **work** | **person** | coworker |
-|  **** |  | boss |
-|  **** |  | advisor |
-|   |  | employee |
-|   |  | mentor |
-|   |  | supervisor |
-|   |  | manager |
-|   |  | colleage |
-|   |  | customer |
-|   |  | client |
-|   |  | supplier |
-|   |  | supplier |
-|   | **event** | meeting |
-|   |  | comference |
-|   |  | orientation |
-|   |  | training |
-|   |  | interview |
-|  **** | **award** | raise |
-|   |  | promotion |
-|   |  | bonus |
-|   | **punishment** | fired |
-|   |  | leave |
-|   |  | terminated |
-|  **reading** | **book** | title |
-|   |  | author |
-|   |  | character |
-|   |  | plot |
-|  **friends** | TBD | TBD |
+![](images/nao_intents.png)
+![](images/nao_entities.png)
 
 
 ## Example Dialogue Flow: Tone = Sadness:
