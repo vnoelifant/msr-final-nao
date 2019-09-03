@@ -315,10 +315,10 @@ catch index error and print results. Write pseudocode in functions first. Fill i
       * IN WORK
 
     #### TODO on 9/2/19:
-      * add more friend and book entities/responses 
+      * add more friend and book entities/responses (DONE)
       * update/test code to have Nao speak back entity per list index. (DONE)
-      * create final project videos
-      * create project portfolio post
+      * create final project videos (DONE)
+      * create project portfolio post (IN WORK)
 
 
 

@@ -29,7 +29,8 @@ from naoqi import ALBroker
 # from nao_dialogue import Transcriber,Dialogue
 import traceback
 
-TOP_EMOTION_SCORE_THRESHOLD = 0.7
+# threshold value that determines tone
+TOP_EMOTION_SCORE_THRESHOLD = 0.65
 
 # initialize Watson Assistant service
 assistant = AssistantV1(
@@ -50,15 +51,17 @@ workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
 emotions = ['sadness','joy','anger','fear']
 
+# Dialogue class
 class Dialogue:  
     def __init__(self,path_to_audio_file):
+        # get the .wav file path
         self.path_to_audio_file = path_to_audio_file 
 
     # convert speech to text via Watson STT
     def transcribe_audio(self):
         #initialize speech to text service
         speech_to_text = SpeechToTextV1(
-            iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
+            iam_apikey='zzCg3g-cCs5FIKKuTF0pA87OZi8WFdD2i5yOv762cj62',
             url='https://stream.watsonplatform.net/speech-to-text/api')
 
         with open((self.path_to_audio_file), 'rb') as audio_file:
@@ -71,8 +74,6 @@ class Dialogue:
                 ).get_result()
 
             speech_text = speech_result['results'][0]['alternatives'][0]['transcript']
-            print("User Speech Text: " + speech_text + "\n")
-               
             user_speech_text = {
                 'workspace_id': workspace_id,
                 'input': {
@@ -82,25 +83,26 @@ class Dialogue:
         
         return user_speech_text
 
+    # look for intents via Watson Assistant
     def get_intent_response(self,user_speech_text):
 
         intent_response = assistant.message(workspace_id=workspace_id,
                                          input=user_speech_text['input'],
                                         ).get_result()
         
-        if intent_response['intents'][0]['confidence'] > 0.7:
+        if intent_response['intents'][0]['confidence'] > 0.6:
             intent_state = intent_response['intents'][0]['intent']
             return intent_state
         
         return None
 
-    def get_entity_response(self,user_speech_text,intent_state):
-        print "intent state for entity",intent_state
+    # look for entities via Watson Assistant
+    def get_entity_response(self,user_speech_text,intent_state=""):
         entity_response = assistant.message(workspace_id=workspace_id,
                                          input=user_speech_text['input'],
-                                        ).get_result()
+                                         ).get_result()
         if intent_state:
-            print "found intent for entity"
+            #print "found intent for entity"
             entity_response['intents'][0]['intent'] = intent_state
             entity_response['intents'][0]['confidence'] = None
         
@@ -109,14 +111,12 @@ class Dialogue:
             if entity_response['entities'][0]['confidence'] > 0.5:
                 entity_state = entity_response['entities'][0]['value']
                 entity = entity_response['entities'][0]['entity']
-                print "response with detected entity"
-                print(json.dumps(entity_response, indent=2))
-                return entity_state, entity
+                return entity_state
         
-        return None,None
+        return None
 
 
-   # get the top emotion
+   # get the top emotion via Watson Tone Analyzer
     def get_top_emo(self,user_speech_text):
         # initialize emotion data
         max_score = 0.0
@@ -124,40 +124,29 @@ class Dialogue:
         top_emo_score = None
 
         tone_analysis = tone_analyzer.tone(tone_input=user_speech_text['input'], content_type='application/json').get_result()
-        #print "tone response",json.dumps(tone_analysis, indent=2)
-        #print tone_analysis
         # create list of tones
         tone_list = tone_analysis['document_tone']['tones']
        
         # find the emotion with the highest tone score
         for tone_dict in tone_list:
-            #print "tone dict",tone_dict
             if tone_dict['tone_id'] == "sadness" or tone_dict['tone_id'] == "joy" or \
             tone_dict['tone_id'] == "anger" or tone_dict['tone_id'] == "fear":
-                #print "tone id",tone_dict['tone_id'] 
-                #print "max score", max_score,top_emotion,top_emo_score
                 if tone_dict['score'] > max_score:
                     max_score = tone_dict['score']
-                    #top_emotion = tone['tone_name'].lower()
                     top_emotion = tone_dict['tone_id']
                     top_emo_score = tone_dict['score']
-                    #print "top emo",top_emotion, top_emo_score
-
                 # set a neutral emotion if under tone score threshold
                 if max_score <= TOP_EMOTION_SCORE_THRESHOLD:
-                    print "tone score under threshold"
+                    #print "tone score under threshold"
                     top_emotion = 'neutral'
                     top_emo_score = None
- 
-        print "chosen top emo",top_emotion, top_emo_score
+
         return top_emotion, top_emo_score
 
+    # function to retrieve responses for intent utterances per conversation turn
     def intent_state_response(self,res_list,intent_list):
         try:
-        
-            #if len(res_list) == 1:
-            print "generating intent response"
-            print "intent state",intent_list[0]
+      
             for response_dict in res_list:
                 for response in response_dict[intent_list[0]]:
                     yield response
@@ -165,28 +154,21 @@ class Dialogue:
         except KeyError:
             return
 
+    # function to retrieve responses for entity utterances per conversation turn
     def entity_state_response(self,res_list,entity_list):
         try:
-            print "generating entity response"
-            #while len(state) > 0:
-            print "entity state",entity_list[0]
             for response_dict in res_list:
                 for response in response_dict[entity_list[0]]:
                     yield response
     
         except KeyError:
             return
-
+    # function to retrieve responses for tone utterances per conversation turn
     def emo_state_response(self,res_list,entity_list,top_emotion):
         try:
-       
-            print "generating emotional response"
-            print "res list", res_list
-            #while len(tone_hist) > 0:
-            print "entity state",entity_list[0]
+
             for emo,response_dict in zip(emotions,res_list):
                 if emo == top_emotion:
-                    print "top emotion",top_emotion
                     for response in response_dict[entity_list[0]]:
                         yield response
     
