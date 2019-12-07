@@ -3,7 +3,6 @@ from ibm_watson import SpeechToTextV1, AssistantV1,NaturalLanguageUnderstandingV
 ToneAnalyzerV3,TextToSpeechV1
 from ibm_watson.natural_language_understanding_v1 \
 import Features, EntitiesOptions, KeywordsOptions
-from speech_sentiment_python.recorder import Recorder
 import traceback
 import sys
 from pydub import AudioSegment
@@ -211,8 +210,34 @@ class Dialogue:
                 'Twilight':["Haha, really, why?!","Oh dear! Okay, I will be sure not to pick up" + " " + self.entity_state + ".To lighten things up for you, let me recommend reading The Minor, by Sotseki"],
                 'John':["Oh okay. Is eveyrthing alright with you though?","I'm sorry to hear that. Well let me know if you ever want to talk about" + " " + self.entity_state + ".You know I am here for you!"]}]
     
-    # cozmo robot speaks the text response from Watson
-    def cozmo_text(self,response):
-        def cozmo_program(robot: cozmo.robot.Robot):
-            robot.say_text(response).wait_for_completed()     
-        cozmo.run_program(cozmo_program)
+    # cozmo robot speaks the text response from Watson and says your facial expression 
+    # Following emotions: unknown, neutral, happy, surprosed, angry, sad
+    def cozmo_response(self,response):
+        try:
+            def cozmo_program_text(robot: cozmo.robot.Robot):
+                robot.say_text(response).wait_for_completed() 
+            
+            def cozmo_program_face(robot: cozmo.robot.Robot):
+                robot.move_lift(-3)
+                robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
+                robot.enable_facial_expression_estimation(True)
+                face = None
+
+                face = robot.world.wait_for_observed_face(timeout=5)
+                print(face.expression)
+                print(face.name)
+                print(face.face_id)
+                print(face.expression_score)
+                face_response = "You seem" + face.expression + "!" 
+                robot.say_text(face_response).wait_for_completed() 
+
+                time.sleep(.1)  
+            
+            def cozmo_program(robot: cozmo.robot.Robot):  
+                cozmo_program_text(robot)
+                cozmo_program_face(robot)   
+                
+            cozmo.run_program(cozmo_program, use_viewer=True, force_viewer_on_top=True)
+
+        except KeyboardInterrupt:
+            print("stopping with keyboard interrupt")

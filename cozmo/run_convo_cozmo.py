@@ -48,7 +48,7 @@ def main():
                             # initialize intent response generator object
                             int_res = my_convo.get_intent_response()
                             try:
-                                my_convo.cozmo_text((next(int_res)))
+                                my_convo.cozmo_response((next(int_res)))
                             except StopIteration: 
                                 pass
                             start_dialogue = False
@@ -87,7 +87,7 @@ def main():
                             if keep_entity:
                                 if entity_list and not tone_hist:
                                     try:
-                                        my_convo.cozmo_text((next(ent_res)))
+                                        my_convo.cozmo_response((next(ent_res)))
                                         # new test to transition to other entity
                                         if entity_list[0] == "Penny":
                                             keep_entity = False
@@ -101,7 +101,7 @@ def main():
                            
                                 if tone_hist:
                                     try:                          
-                                        my_convo.cozmo_text(next(tone_res))
+                                        my_convo.cozmo_response(next(tone_res))
                                         if entity_list[0] == "meeting":
                                             keep_entity = False
                                         if "coworker" in entity_list and top_tone == "joy":
