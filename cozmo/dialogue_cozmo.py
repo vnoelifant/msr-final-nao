@@ -1,15 +1,17 @@
 import json
-from ibm_watson import SpeechToTextV1, AssistantV1,NaturalLanguageUnderstandingV1, \
-ToneAnalyzerV3,TextToSpeechV1
+from ibm_watson import SpeechToTextV1, AssistantV1, NaturalLanguageUnderstandingV1, \
+    ToneAnalyzerV3, TextToSpeechV1
 from ibm_watson.natural_language_understanding_v1 \
-import Features, EntitiesOptions, KeywordsOptions
+    import Features, EntitiesOptions, KeywordsOptions
+from speech_sentiment_python.recorder import Recorder
 import traceback
 import sys
 from pydub import AudioSegment
 from pydub.playback import play
 import cozmo
+import time
 
-TOP_TONE_SCORE_THRESHOLD = 0.65
+TOP_TONE_SCORE_THRESHOLD = 0.75
 
 tone_analyzer = ToneAnalyzerV3(
     version='2017-09-21',
@@ -27,14 +29,17 @@ assistant = AssistantV1(
 workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
 
 text_to_speech = TextToSpeechV1(
-            iam_apikey='db8bGD6av4hlvFZxfJBnI3LodOnwRN-D8kX5AYMf_Lvk',
-            url='https://stream.watsonplatform.net/text-to-speech/api'
+    iam_apikey='db8bGD6av4hlvFZxfJBnI3LodOnwRN-D8kX5AYMf_Lvk',
+    url='https://stream.watsonplatform.net/text-to-speech/api'
 )
 
-emotions = ['sadness','joy','anger','fear']
-           
-class Transcriber:
-    def __init__(self,path_to_audio_file):
+print('Workspace id {0}'.format(workspace_id))
+
+emotions = ['sadness', 'joy', 'anger', 'fear']
+
+
+class Dialogue:
+    def __init__(self, path_to_audio_file):
         self.path_to_audio_file = path_to_audio_file
 
     def transcribe_audio(self):
@@ -45,199 +50,248 @@ class Transcriber:
 
         with open((self.path_to_audio_file), 'rb') as audio_file:
             speech_result = speech_to_text.recognize(
-                    audio=audio_file,
-                    content_type='audio/wav',
-                    word_alternatives_threshold=0.9,
-                    keywords=['hey', 'hi','watson','friend','meet'],
-                    keywords_threshold=0.5
-                ).get_result()
+                audio=audio_file,
+                content_type='audio/wav',
+                word_alternatives_threshold=0.9,
+                keywords=['hey', 'hi', 'watson', 'friend', 'meet'],
+                keywords_threshold=0.5
+            ).get_result()
 
             speech_text = speech_result['results'][0]['alternatives'][0]['transcript']
-               
+            print("User Speech Text: " + speech_text + "\n")
+
             input_text = {
                 'workspace_id': workspace_id,
                 'input': {
                     'text': speech_text
                 }
             }
-        
+
         return input_text
 
-class Dialogue:
-
-    def __init__(self,input_text):
-        self.input_text = input_text
-        self.intent_state = None
-        self.entity_state = None
-        self.top_tone = None
-        self.top_tone_score = None
-    
-    def get_watson_intent(self):
+    def get_watson_intent(self, input_text):
 
         intent_response = assistant.message(workspace_id=workspace_id,
-                                         input=self.input_text['input'],
-                                        ).get_result()
-        
+                                            input=input_text['input'],
+                                            ).get_result()
+
         if intent_response['intents'][0]['confidence'] > 0.7:
-            self.intent_state = intent_response['intents'][0]['intent']
+            intent_state = intent_response['intents'][0]['intent']
             print("response with detected intent")
             print(json.dumps(intent_response, indent=2))
-            return self.intent_state
+            return intent_state
 
         return None
 
-    def get_watson_entity(self):
-        
+    def get_watson_entity(self, input_text):
+
+        # print("intent state for entity", intent_state)
         entity_response = assistant.message(workspace_id=workspace_id,
-                                         input=self.input_text['input'],
-                                        ).get_result()
-        if self.intent_state:
-            entity_response['intents'][0]['intent'] = self.intent_state
-            entity_response['intents'][0]['confidence'] = None
-        
+                                            input=input_text['input'],
+                                            ).get_result()
+
         if entity_response['entities']:
             if entity_response['entities'][0]['confidence'] > 0.5:
-                self.entity_state = entity_response['entities'][0]['value']
+                entity_state = entity_response['entities'][0]['value']
+                print("response with detected entity")
                 print(json.dumps(entity_response, indent=2))
-                return self.entity_state
+                return entity_state
 
         return None
 
     # get the top emotion
-    def get_watson_tone(self):
-        
+    def get_watson_tone(self, input_text):
+
         # initialize emotion data
         max_score = 0.0
-       
-        tone_analysis = tone_analyzer.tone(tone_input=self.input_text['input'], content_type='application/json').get_result()
-       
+        top_tone = None
+        top_tone_score = None
+
+        tone_analysis = tone_analyzer.tone(tone_input=input_text['input'],
+                                           content_type='application/json').get_result()
+        # print "tone response",json.dumps(tone_analysis, indent=2)
+        print(tone_analysis)
         # create list of tones
         tone_list = tone_analysis['document_tone']['tones']
-       
+
         # find the emotion with the highest tone score
         for tone_dict in tone_list:
+            print("tone dict", tone_dict)
             if tone_dict['tone_id'] == "sadness" or tone_dict['tone_id'] == "joy" or \
-            tone_dict['tone_id'] == "anger" or tone_dict['tone_id'] == "fear":
+                    tone_dict['tone_id'] == "anger" or tone_dict['tone_id'] == "fear":
+                print("tone id", tone_dict['tone_id'])
+                print("max score", max_score, top_tone, top_tone_score)
                 if tone_dict['score'] > max_score:
                     max_score = tone_dict['score']
-                    self.top_tone = tone_dict['tone_id']
-                    self.top_tone_score = tone_dict['score']
+                    # top_tone = tone['tone_name'].lower()
+                    top_tone = tone_dict['tone_id']
+                    top_tone_score = tone_dict['score']
+                    print("top emo", top_tone, top_tone_score)
+
                 # set a neutral emotion if under tone score threshold
                 if max_score <= TOP_TONE_SCORE_THRESHOLD:
-                    self.top_tone = 'neutral'
-                    self.top_tone_score = None
-        return self.top_tone, self.top_tone_score
+                    print("tone score under threshold")
+                    top_tone = 'neutral'
+                    top_tone_score = None
+                    print("top emotion, top score: ", top_tone, top_tone_score)
 
-    def get_intent_response(self):
+        #print("chosen top emo", top_tone, top_tone_score)
+        return top_tone, top_tone_score
 
-        intent_res_list = self.build_intent_res()
-        
+    def get_intent_response(self, intent_state):
+
+        intent_res_list = self.build_intent_res(intent_state)
+
         try:
             for response_dict in intent_res_list:
-                for response in response_dict[self.intent_state]:
-                    yield response    
+                for response in response_dict[intent_state]:
+                    yield response
+
         except KeyError:
             return
 
-    def get_entity_response(self):
+    def get_entity_response(self, entity_state):
 
-        # self.entity_state = self.get_watson_tone()
-        
-        entity_res_list = self.build_entity_res()
-        
+        entity_res_list = self.build_entity_res(entity_state)
+
         try:
             for response_dict in entity_res_list:
-                for response in response_dict[self.entity_state]:
-                    yield response 
+                for response in response_dict[entity_state]:
+                    yield response
+
         except KeyError:
             return
 
-    def get_tone_response(self):
-        
-        tone_res_list = self.build_tone_res()
-        
+    def get_tone_response(self, entity_state, top_tone):
+
+        tone_res_list = self.build_tone_res(entity_state, top_tone)
+
         try:
-            for emo,response_dict in zip(emotions,tone_res_list):
-                if emo == self.top_tone:
-                    for response in response_dict[self.entity_state]:
+            for emo, response_dict in zip(emotions, tone_res_list):
+                if emo == top_tone:
+                    for response in response_dict[entity_state]:
                         yield response
+
         except KeyError:
             return
 
-    def build_intent_res(self):
-    
-        return [{'work':["What did you do at your" + " " + self.intent_state + "?"],'reading':["What book did you read?"],'friends':["Which friend did you visit?"]}]
+    def build_intent_res(self, intent_state):
 
-    def build_entity_res(self):
-        
-        return [{'meeting':["Oh, how was the" + " " + self.entity_state,"Oh no, What happened at the" + " " + self.entity_state + "?","Oh no, What happened at the" + " " + self.entity_state + "?"],
-                 'coworker':["Oh, what bothered you about your" + " " + self.entity_state,"Ah. Does your" + " " + self.entity_state + " " + "at least try to come up with a middle ground?",
-                 "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."],
-                 'client':["Wow! Congratulations! What does this mean?"],
-                 'promotion':["That's so wonderful, congratulations again! I knew you were capable of such an amazing thing!"],
-                 'Minor':["Oh, wow! What were your thoughts about the"  + " " + self.entity_state + "?","I am so glad to hear you enjoyed the" + " " + self.entity_state + "!","Anytime, Goodbye now!!"],
-                 'Twilight':["Oh, I've heard of" + " " +  self.entity_state + " " + "but forgot what it was about!","Haha, really, why?!","Oh dear! Okay, I will be sure not to pick up" + " " + self.entity_state + ".To lighten things up for you, let me recommend reading The Minor, by Sotseki"],
-                 'concert':["Oh who did you see at the" + " " + self.entity_state + "?"],
-                 'Beach House':["Cool! I love" + " " + self.entity_state + "!" + " " + ".How did they perform?"],
-                 'John':["Okay, what did you do with" + " " + self.entity_state + "?", "Oh okay. Is eveyrthing alright with you though?",
-                 "I'm sorry to hear that. Well let me know if you ever want to talk about" + " " + self.entity_state + ".You know I am here for you!","Anytime!"],
-                 'Penny':["Okay, what did you do with" + " " + self.entity_state + "?"]}]
+        return [{'work': [f"Making that money eh? What did you do at your" + " " + intent_state + "?"],
+                 'reading': ["What book did you read?"], 'friends': ["Which friend did you visit?"]}]
 
-    def build_tone_res(self):
+    def build_entity_res(self, entity_state):
+
+        return [{'meeting': [f"Oh, how was the {entity_state}?",
+                             f"Oh no, What happened at the {entity_state}?",
+                             f"Oh no, What happened at the {entity_state}?"],
+                 'coworker': [f"Oh, what bothered you about your {entity_state}?",
+                              f"Ah. Does your {entity_state} at least try to come up with a middle ground?",
+                              "Oh I am sorry to hear. Maybe if you speak to someone higher up they can help sort things out for you."],
+                 'client': ["Wow! Congratulations! What does this mean?"],
+                 'promotion': [
+                     "That's so wonderful, congratulations again! I knew you were capable of such an amazing thing!"],
+                 'Minor': [f"Oh, wow! What were your thoughts about the {entity_state}?",
+                           f"I am so glad to hear you enjoyed the {entity_state}!",
+                           "Anytime, Goodbye now!!"],
+                 'Twilight': [f"Oh, I've heard of {entity_state} but forgot what it was about!",
+                              "Haha, really, why?!",
+                              f"Oh dear! Okay, I will be sure not to pick up {entity_state}.To lighten things up for you, let me recommend reading The Minor, by Sotseki."],
+                 'concert': [f"Oh who did you see at the" + " " + entity_state + "?"],
+                 'Beach House': [f"Cool! I love {entity_state}. How did they perform?"],
+                 'John': [f"Okay, what did you do with {entity_state}?",
+                          "Oh okay. Is eveyrthing alright with you though?",
+                          f"I'm sorry to hear that. Well let me know if you ever want to talk about {entity_state}.You know I am here for you!",
+                          "Anytime!"],
+                 'Penny': [f"Okay, what did you do with {entity_state}?"]}]
+
+    def build_tone_res(self, entity_state, top_tone):
+
+        # if top_tone_score != None:
         # sadness, joy, anger, fear response lists for all entities
-        return [{'meeting':["Oh no, you sound" + " " + self.top_tone + ".What happened at the" + " " + self.entity_state + "?",
-                "Oh sorry I missed that, you sound" + " " + self.top_tone + ".what happened at the" + " " + self.entity_state + "?"],
-                'coworker':["Oh no, you sound sad,what bothered you about" + " " + self.entity_state,"Oh no, you sound sad,what bothered you about" + " " + self.entity_state],
-                'Twilight':["Oh dear! Okay, I will be sure not to pick up" + " " + self.entity_state + ".To lighten things up for you, let me recommend reading The Minor, by Sotseki"],
-                'John':["Oh okay. Is eveyrthing alright with you though?","I'm sorry to hear that. Well let me know if you ever want to talk about" + " " + self.entity_state + ".You know I am here for you!",
-                "Anytime! I love you!"]},
-                    
-                {'coworker':["Good to hear you are experiencing" + self.top_tone + ".I'm always here for you.","Good to hear you sound happy again"],
-                'client':["Wow! Congratulations! What does this mean?"],
-                'promotion':["That's so wonderful, congratulations again! I knew you were capable of such an amazing thing!","Anytime!"],
-                'Minor':["I am so glad to hear you enjoyed the" + " " + self.entity_state + "!","Anytime! Goodbye now dear Ronnie!"],
-                'Twilight':["Anytime, Goodbye Now dear Ronnie!"],
-                'Beach House':["Wow that's awesome! Any band that makes makes Penny feel" + " " + self.top_tone + " " + "is worth watching in my book!"],
-                'John':["Anytime, I love you!"]},
-                
-                {'meeting':["Oh you sound a bit angry,I'm here to help you. What happened at the" + " " + self.entity_state,"Oh, You sound angry again about the" + " "  + self.entity_state],
-                'coworker':["Oh, you are angry, let me help. What bothered you about" + " " + self.entity_state,"Oh, You sound angry again about" + " " + self.entity_state],
-                'Twilight':["Oh dear! Okay, I will be sure not to pick up" + " " + self.entity_state + ".To lighten things up for you, let me recommend reading The Minor, by Sotseki"],
-                'John':["Oh okay. Is eveyrthing alright with you though?","I'm sorry to hear that. Well let me know if you ever want to talk about" + " " + self.entity_state + ".You know I am here for you!"]},
-                
-                {'meeting':["Oh no, I am sorry you sound scared, what happened at the" + " " + self.entity_state,"Oh, You sound scared again about the" + " " +  self.entity_state],
-                'coworker':["Oh don't be scared, what bothered you about" + " " + self.entity_state,"Oh, You sound scared again about" + " " + self.entity_state],
-                'Twilight':["Haha, really, why?!","Oh dear! Okay, I will be sure not to pick up" + " " + self.entity_state + ".To lighten things up for you, let me recommend reading The Minor, by Sotseki"],
-                'John':["Oh okay. Is eveyrthing alright with you though?","I'm sorry to hear that. Well let me know if you ever want to talk about" + " " + self.entity_state + ".You know I am here for you!"]}]
-    
-    # cozmo robot speaks the text response from Watson and says your facial expression 
+        return [{'meeting': [f"Oh no, you sound {top_tone}.What happened at the {entity_state}?",
+            f"Oh sorry I missed that, you sound {top_tone}.What happened?"],
+                 'coworker': [f"Oh no, you sound sad,what bothered you about your {entity_state}?",
+                              f"Oh no, you sound sad again,what bothered you about your {entity_state}?"],
+                 'Twilight': [
+                     "Oh dear! Okay, I will be sure not to pick up that book..To lighten things up for you, let me recommend reading The Minor, by Sotseki"],
+                 'John': ["Oh okay. Is eveyrthing alright with you though?",
+                          "I'm sorry to hear that. Well let me know if you ever want to talk about your friend..You know I am here for you!",
+                          "Anytime! I love you!"]},
+
+                {'coworker': [f"Good to hear you are experiencing {top_tone}. I'm always here for you.",
+                              "Good to hear you sound happy again"],
+                 'client': ["Wow! Congratulations! What does this mean?"],
+                 'promotion': [
+                     "That's so wonderful, congratulations again! I knew you were capable of such an amazing thing!",
+                     "Anytime!"],
+                 'Minor': ["I am so glad to hear you enjoyed the book!",
+                           "Anytime! Goodbye now dear Ronnie!"],
+                 'Twilight': ["Anytime, Goodbye Now dear Ronnie!"],
+                 'Beach House': [
+                     f"Wow that's awesome! Any band that makes makes Penny feel {top_tone} is worth watching in my book!"],
+                 'John': ["Anytime, I love you!"]},
+
+                {'meeting': [
+                    f"Oh you sound a bit angry,I'm here to help you. What happened at the {entity_state}?",
+                    f"Oh, You sound angry again about the {entity_state}? What happened there?"],
+                 'coworker': [f"Oh, you are angry, let me help. What bothered you about your {entity_state}?",
+                              f"Oh, You sound angry again about your{entity_state}. What happened with you guys?"],
+                 'Twilight': [
+                     f"Oh dear! Okay, I will be sure not to pick up {entity_state}.To lighten things up for you, let me recommend reading The Minor, by Sotseki."],
+                 'John': ["Oh okay. Is everything alright with you though?",
+                          f"I'm sorry to hear that. Well let me know if you ever want to talk about {entity_state}. You know I am here for you!"]},
+
+                {'meeting': [f"Oh no, I am sorry you sound scared, what happened at the {entity_state}?",
+                             f"Oh, You sound scared again about the {entity_state}?"],
+                 'coworker': [f"Oh don't be scared, what bothered you about {entity_state}?",
+                              f"Oh, You sound scared again about {entity_state}?"],
+                 'Twilight': ["Haha, really, why?!",
+                              f"Oh dear! Okay, I will be sure not to pick up {entity_state}.To lighten things up for you, let me recommend reading The Miner, by Sotseki."],
+                 'John': ["Oh okay. Is eveyrthing alright with you though?",
+                          f"I'm sorry to hear that. Well let me know if you ever want to talk about" + " " + entity_state + ".You know I am here for you!"]}]
+
+    # cozmo robot speaks the text response from Watson and says your facial expression
     # Following emotions: unknown, neutral, happy, surprosed, angry, sad
-    def cozmo_response(self,response):
-        try:
-            def cozmo_program_text(robot: cozmo.robot.Robot):
-                robot.say_text(response).wait_for_completed() 
-            
-            def cozmo_program_face(robot: cozmo.robot.Robot):
+    def get_cozmo_response(self, response, top_tone = ""):
+
+        def cozmo_text_response(robot: cozmo.robot.Robot):
+            robot.say_text(response).wait_for_completed()
+        def cozmo_face_response(robot: cozmo.robot.Robot):
+            print("Running cozmo face response")
+            try:
+
                 robot.move_lift(-3)
                 robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
                 robot.enable_facial_expression_estimation(True)
                 face = None
-
-                face = robot.world.wait_for_observed_face(timeout=5)
+                face = robot.world.wait_for_observed_face(timeout=30)
+                if face and face.is_visible:
+                    robot.set_all_backpack_lights(cozmo.lights.blue_light)
+                else:
+                    robot.set_backpack_lights_off()
                 print(face.expression)
                 print(face.name)
                 print(face.face_id)
                 print(face.expression_score)
-                face_response = "You seem" + face.expression + "!" 
-                robot.say_text(face_response).wait_for_completed() 
+                # Cozmo responds based on happy facial expression (transitioned from negative tone)
+                face_response = f"You have a face that is {face.expression}!"
+                robot.say_text(face_response).wait_for_completed()
+                if face.expression == 'unknown':
+                    robot.say_text("But I think you look happy. Yay!").wait_for_completed()
+                elif face.expression == 'happy':
+                    robot.say_text(f"Yay for being {face.expression}!").wait_for_completed()
+                time.sleep(.1)
 
-                time.sleep(.1)  
-            
-            def cozmo_program(robot: cozmo.robot.Robot):  
-                cozmo_program_text(robot)
-                cozmo_program_face(robot)   
-                
-            cozmo.run_program(cozmo_program, use_viewer=True, force_viewer_on_top=True)
+            except KeyboardInterrupt:
+                print("stopping with keyboard interrupt")
 
-        except KeyboardInterrupt:
-            print("stopping with keyboard interrupt")
+        def cozmo_program(robot: cozmo.robot.Robot):
+            cozmo_text_response(robot)
+            print("check the tone for face detection: ", top_tone)
+            if top_tone and top_tone == "joy":
+                print("detected joyful tone")
+                cozmo_face_response(robot)
+            else:
+                pass
+        cozmo.run_program(cozmo_program)
