@@ -10,6 +10,8 @@ from pydub import AudioSegment
 from pydub.playback import play
 import cozmo
 import time
+import asyncio
+from PIL import Image
 
 TOP_TONE_SCORE_THRESHOLD = 0.75
 
@@ -275,16 +277,24 @@ class Dialogue:
                 print(face.face_id)
                 print(face.expression_score)
                 # Cozmo responds based on happy facial expression (transitioned from negative tone)
-                face_response = f"You have a face that is {face.expression}!"
+                # and a smiley face is displayed on his OLED screen
+                face_response = f"I see your face with an {face.expression} expression. But I think you look happy!"
                 robot.say_text(face_response).wait_for_completed()
-                if face.expression == 'unknown':
-                    robot.say_text("But I think you look happy. Yay!").wait_for_completed()
-                elif face.expression == 'happy':
-                    robot.say_text(f"Yay for being {face.expression}!").wait_for_completed()
-                time.sleep(.1)
+                if face.expression == 'happy':
+                    robot.say_text(f"Yay I am so glad you have a {face.expression} face!").wait_for_completed()
+                # time.sleep(.1)
+                image = Image.open("cozmo_smiley_2.jpg")
+                image = image.resize(cozmo.oled_face.dimensions(), Image.NEAREST)
+                image = cozmo.oled_face.convert_image_to_screen_data(image)
+                seconds = 10
 
-            except KeyboardInterrupt:
-                print("stopping with keyboard interrupt")
+                for i in range(seconds):
+                    robot.display_oled_face_image(image, 1000.0)
+                    time.sleep(1.0)
+
+            except asyncio.TimeoutError:
+                print("did not find a face")
+                pass
 
         def cozmo_program(robot: cozmo.robot.Robot):
             cozmo_text_response(robot)
