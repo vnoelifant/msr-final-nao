@@ -99,7 +99,7 @@ class Dialogue:
 
     # look for entities via Watson Assistant
     def get_entity_response(self,user_speech_text,intent_state=""):
-        entity_response = assistant.message(wWORKSPACE_ID=WORKSPACE_ID,
+        entity_response = assistant.message(WORKSPACE_ID=WORKSPACE_ID,
                                          input=user_speech_text['input'],
                                          ).get_result()
         if intent_state:
