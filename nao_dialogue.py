@@ -28,26 +28,27 @@ from naoqi import ALBroker
 # from nao_recorder import SoundReceiverModule
 # from nao_dialogue import Transcriber,Dialogue
 import traceback
+from decouple import config
 
 # threshold value that determines tone
 TOP_EMOTION_SCORE_THRESHOLD = 0.65
 
 # initialize Watson Assistant service
 assistant = AssistantV1(
-    version='2019-02-28',
-    iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
-    url='https://gateway.watsonplatform.net/assistant/api'
+    VERSION=config('VERSION_ASST'),
+    IAM_APIKEY=config('IAM_APIKEY_ASST'),
+    URL=config('URL_ASST')
 )
 
 # initialize Watson Tone Analyzer
 tone_analyzer = ToneAnalyzerV3(
-    version='2017-09-21',
-    iam_apikey='lcyNkGVUvRAKH98-K-pQwlUT0oG24TyY9OYUBXXIvaTk',
-    url='https://gateway.watsonplatform.net/tone-analyzer/api'
+    VERSION=config('VERSION_TONE'),
+    IAM_APIKEY=config('IAM_APIKEY_TONE'),
+    URL=config('URL_TONE')
 )
 
 # to retrieve intents, user examples, entities from Watson Assistant
-workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
+WORKSPACE_ID = config('WORKSPACE_ID')
 
 emotions = ['sadness','joy','anger','fear']
 
@@ -61,8 +62,8 @@ class Dialogue:
     def transcribe_audio(self):
         #initialize speech to text service
         speech_to_text = SpeechToTextV1(
-            iam_apikey='zzCg3g-cCs5FIKKuTF0pA87OZi8WFdD2i5yOv762cj62',
-            url='https://stream.watsonplatform.net/speech-to-text/api')
+            IAM_APIKEY=config('IAM_APIKEY_STT'),
+            URL=config('URL_STT')
 
         with open((self.path_to_audio_file), 'rb') as audio_file:
             speech_result = speech_to_text.recognize(
@@ -75,7 +76,7 @@ class Dialogue:
 
             speech_text = speech_result['results'][0]['alternatives'][0]['transcript']
             user_speech_text = {
-                'workspace_id': workspace_id,
+                'workspace_id': WORKSPACE_ID,
                 'input': {
                     'text': speech_text
                 }
@@ -86,7 +87,7 @@ class Dialogue:
     # look for intents via Watson Assistant
     def get_intent_response(self,user_speech_text):
 
-        intent_response = assistant.message(workspace_id=workspace_id,
+        intent_response = assistant.message(WORKSPACE_ID=WORKSPACE_ID,
                                          input=user_speech_text['input'],
                                         ).get_result()
         
@@ -98,7 +99,7 @@ class Dialogue:
 
     # look for entities via Watson Assistant
     def get_entity_response(self,user_speech_text,intent_state=""):
-        entity_response = assistant.message(workspace_id=workspace_id,
+        entity_response = assistant.message(wWORKSPACE_ID=WORKSPACE_ID,
                                          input=user_speech_text['input'],
                                          ).get_result()
         if intent_state:
