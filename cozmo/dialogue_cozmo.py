@@ -12,30 +12,31 @@ import cozmo
 import time
 import asyncio
 from PIL import Image
+from decouple import config
 
 TOP_TONE_SCORE_THRESHOLD = 0.75
 
 tone_analyzer = ToneAnalyzerV3(
-    version='2017-09-21',
-    iam_apikey='lcyNkGVUvRAKH98-K-pQwlUT0oG24TyY9OYUBXXIvaTk',
-    url='https://gateway.watsonplatform.net/tone-analyzer/api'
+    VERSION=config('VERSION_TONE'),
+    IAM_APIKEY=config('IAM_APIKEY_TONE'),
+    URL=config('URL_TONE')
 )
 
 # initialize the Watson Assistant
 assistant = AssistantV1(
-    version='2019-02-28',
-    iam_apikey='VbfeqWup87p3MP1jPbwoLXhFv7O-1bmSXiN2HZQFrUaw',
-    url='https://gateway.watsonplatform.net/assistant/api'
+    VERSION=config('VERSION_ASST'),
+    IAM_APIKEY=config('IAM_APIKEY_ASST'),
+    URL=config('URL_ASST')
 )
 
-workspace_id = 'f7bf5689-9072-480a-af6a-6bce1db1c392'
+WORKSPACE_ID = config('WORKSPACE_ID')
 
 text_to_speech = TextToSpeechV1(
-    iam_apikey='db8bGD6av4hlvFZxfJBnI3LodOnwRN-D8kX5AYMf_Lvk',
-    url='https://stream.watsonplatform.net/text-to-speech/api'
+    IAM_APIKEY=config('IAM_APIKEY_TTS')
+    URL=config('URL_TTS')
 )
 
-print('Workspace id {0}'.format(workspace_id))
+print('Workspace id {0}'.format(WORKSPACE_ID))
 
 emotions = ['sadness', 'joy', 'anger', 'fear']
 
@@ -47,8 +48,8 @@ class Dialogue:
     def transcribe_audio(self):
         # initialize speech to text service
         speech_to_text = SpeechToTextV1(
-            iam_apikey='9MXnNlJ3iDrKTsvBYVF5IR3CLVbCHkkL1fhGaRySFsEe',
-            url='https://stream.watsonplatform.net/speech-to-text/api')
+            IAM_APIKEY=config('IAM_APIKEY_STT')
+            URL=config('URL_STT')
 
         with open((self.path_to_audio_file), 'rb') as audio_file:
             speech_result = speech_to_text.recognize(
@@ -63,7 +64,7 @@ class Dialogue:
             print("User Speech Text: " + speech_text + "\n")
 
             input_text = {
-                'workspace_id': workspace_id,
+                'workspace_id': WORKSPACE_ID,
                 'input': {
                     'text': speech_text
                 }
@@ -73,7 +74,7 @@ class Dialogue:
 
     def get_watson_intent(self, input_text):
 
-        intent_response = assistant.message(workspace_id=workspace_id,
+        intent_response = assistant.message(WORKSPACE_ID=WORKSPACE_ID,
                                             input=input_text['input'],
                                             ).get_result()
 
@@ -88,7 +89,7 @@ class Dialogue:
     def get_watson_entity(self, input_text):
 
         # print("intent state for entity", intent_state)
-        entity_response = assistant.message(workspace_id=workspace_id,
+        entity_response = assistant.message(WORKSPACE_ID=WORKSPACE_ID,
                                             input=input_text['input'],
                                             ).get_result()
 
