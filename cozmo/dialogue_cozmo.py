@@ -32,7 +32,7 @@ assistant = AssistantV1(
 WORKSPACE_ID = config('WORKSPACE_ID')
 
 text_to_speech = TextToSpeechV1(
-    IAM_APIKEY=config('IAM_APIKEY_TTS')
+    IAM_APIKEY=config('IAM_APIKEY_TTS'),
     URL=config('URL_TTS')
 )
 
@@ -48,8 +48,9 @@ class Dialogue:
     def transcribe_audio(self):
         # initialize speech to text service
         speech_to_text = SpeechToTextV1(
-            IAM_APIKEY=config('IAM_APIKEY_STT')
+            IAM_APIKEY=config('IAM_APIKEY_STT'),
             URL=config('URL_STT')
+        )
 
         with open((self.path_to_audio_file), 'rb') as audio_file:
             speech_result = speech_to_text.recognize(
